@@ -133,3 +133,82 @@ def update_user_last_login_datetime(username):
         cursor.close()
         connection.close()
 
+
+def add_user_individual_expense(username, amount, category, date, description):
+    """
+        :param username: The username of the user.
+        :param amount: Amount of the expense added by the user.
+        :param category: Category of the expense added.
+        :param date: Expense spending date.
+        :param description: Description of that particular expense.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        # Fetch the user's ID from the database based on the username
+        cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
+        result = cursor.fetchone()
+        
+        if result is None:
+            return False
+        
+        user_id = result[0]  # Extract the user ID from the result tuple
+
+        # Insert the expense associated with this user ID
+        cursor.execute(
+            "INSERT INTO user_personal_expenses (user_id, amount, category, date, description) VALUES (%s, %s, %s, %s, %s)",
+            (user_id, amount, category, date, description)
+        )
+        connection.commit()
+        return True
+    except mysql.connector.Error as e:
+        print(f"Error adding user individual expense: {e}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_user_individual_expenses(username, start_date=None, end_date=None, category=None):
+    """
+        Fetch user expenses from the database with optional filtering.
+        
+        :param username: The username of the user.
+        :param start_date: Filter expenses from this date onward.
+        :param end_date: Filter expenses up to this date.
+        :param category: Filter expenses by this category.
+        :return: A list of expenses if found, otherwise an empty list.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return []
+
+    cursor = connection.cursor(dictionary=True)
+    query = "SELECT * FROM user_personal_expenses WHERE user_id = (SELECT id FROM users WHERE username = %s)"
+    params = [username]
+
+    if start_date:
+        query += " AND date >= %s"
+        params.append(start_date)
+
+    if end_date:
+        query += " AND date <= %s"
+        params.append(end_date)
+
+    if category:
+        query += " AND category = %s"
+        params.append(category)
+
+    try:
+        cursor.execute(query, params)
+        expenses = cursor.fetchall()
+        return expenses
+    except mysql.connector.Error as e:
+        print(f"Error fetching user individual expenses: {e}")
+        return []
+    finally:
+        cursor.close()
+        connection.close()
