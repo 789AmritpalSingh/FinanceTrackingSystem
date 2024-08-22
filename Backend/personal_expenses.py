@@ -2,6 +2,7 @@ from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import db_connections as db
 
+
 @jwt_required()
 def add_individual_expense():
     """
@@ -23,6 +24,7 @@ def add_individual_expense():
     else:
         return jsonify({"message": "Failed to add expense."}), 500
 
+
 @jwt_required()
 def get_user_expenses():
     """
@@ -40,3 +42,52 @@ def get_user_expenses():
         return jsonify({"message": "No expenses found."}), 404
 
     return jsonify(expenses), 200
+
+
+@jwt_required
+def delete_user_expenses(expense_id):
+    """
+        This function is for deleting the existing expenses for the authenticated user.
+    """
+    username = get_jwt_identity()
+    # Retrieve user id of user from users table using username
+    user_id = db.get_user_id_from_username_in_users_table(username)
+
+    # Ensure the expenses belong to the user before deleting
+    expense = db.get_expense_details_by_expense_id_and_user_id_from_user_personal_expenses_table(expense_id, user_id)
+    # If expense not found for the given user or expense id
+    if not expense:
+        return jsonify({"message": "Expense not found or not authorized to delete."}), 404
+
+    # Delete the expense
+    result = db.delete_user_personal_expense_using_expense_id(expense_id)
+
+    if result:
+        return jsonify({"message": "Expense deleted successfully!"}), 200
+    else:
+        return jsonify({"message": "Failed to delete expense."}), 500
+
+
+@jwt_required
+def update_user_expense(expense_id):
+    """
+        Function for updating the user existing expense.
+    """
+    data = request.get_json()
+    username = get_jwt_identity()
+
+    # Retrieve user id of user from users table using username
+    user_id = db.get_user_id_from_username_in_users_table(username)
+
+    # Ensure the expense belong to the user before updating
+    expense = db.get_expense_details_by_expense_id_and_user_id_from_user_personal_expenses_table(expense_id, user_id)
+    # If expense not found for the given user or expense id
+    if not expense:
+        return jsonify({"message": "Expense not found or not authorized to update."}), 404
+
+    # Update the expense with the new data
+    result = db.update_user_expenses_in_user_personal_expenses_table(expense_id, data)
+    if result:
+        return jsonify({"message": "Expense updated successfully!"}), 200
+    else:
+        return jsonify({"message": "Failed to update expense."}), 500

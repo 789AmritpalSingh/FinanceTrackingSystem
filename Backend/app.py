@@ -2,7 +2,7 @@ from flask import Flask
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from user_authentication import UserRegistration, UserLogin, ProtectedResource
-from personal_expenses import add_individual_expense, get_user_expenses
+from personal_expenses import add_individual_expense, get_user_expenses, delete_user_expenses, update_user_expense
 from config import JWT_SECRET_KEY
 
 app = Flask(__name__)
@@ -21,6 +21,8 @@ api.add_resource(ProtectedResource, '/protected')
 # Expense-related routes
 app.add_url_rule('/add_individual_expense', 'add_individual_expense', add_individual_expense, methods=['POST'])
 app.add_url_rule('/get_user_expenses', 'get_user_expenses', get_user_expenses, methods=['GET'])
+app.add_url_rule('/delete_expense/<int:expense_id>', 'delete_user_expenses', delete_user_expenses, methods=['DELETE'])
+app.add_url_rule('/update_expense/<int:expense_id>', 'update_user_expense', update_user_expense, methods=['PUT'])
 
 if __name__ == '__main__':
     app.run(debug=True)
