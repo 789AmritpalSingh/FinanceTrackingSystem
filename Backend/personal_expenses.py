@@ -44,14 +44,20 @@ def get_user_expenses():
     return jsonify(expenses), 200
 
 
-@jwt_required
+@jwt_required()
 def delete_user_expenses(expense_id):
     """
         This function is for deleting the existing expenses for the authenticated user.
     """
     username = get_jwt_identity()
     # Retrieve user id of user from users table using username
-    user_id = db.get_user_id_from_username_in_users_table(username)
+    user_id = None
+    user_id_tuple_result = db.get_user_id_from_username_in_users_table(username)
+    if user_id_tuple_result:
+        user_id = user_id_tuple_result[0]
+
+    else:
+        print(f"Failed to get user id for the username - {username}")
 
     # Ensure the expenses belong to the user before deleting
     expense = db.get_expense_details_by_expense_id_and_user_id_from_user_personal_expenses_table(expense_id, user_id)
@@ -68,7 +74,7 @@ def delete_user_expenses(expense_id):
         return jsonify({"message": "Failed to delete expense."}), 500
 
 
-@jwt_required
+@jwt_required()
 def update_user_expense(expense_id):
     """
         Function for updating the user existing expense.
@@ -77,7 +83,13 @@ def update_user_expense(expense_id):
     username = get_jwt_identity()
 
     # Retrieve user id of user from users table using username
-    user_id = db.get_user_id_from_username_in_users_table(username)
+    user_id = None
+    user_id_tuple_result = db.get_user_id_from_username_in_users_table(username)
+    if user_id_tuple_result:
+        user_id = user_id_tuple_result[0]
+
+    else:
+        print(f"Failed to get user id for the username - {username}")
 
     # Ensure the expense belong to the user before updating
     expense = db.get_expense_details_by_expense_id_and_user_id_from_user_personal_expenses_table(expense_id, user_id)

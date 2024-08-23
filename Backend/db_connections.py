@@ -79,6 +79,7 @@ def fetch_user(username):
         return user
     except Exception as e:
         print(f"Error during fetching user info for username - {username} - {e}")
+        return None
     finally:
         cursor.close()
         connection.close()
@@ -240,7 +241,7 @@ def get_user_id_from_username_in_users_table(username):
 
     except mysql.connector.Error as e:
         print(f"Error fetching user id from users table using username: {e}")
-        return False
+        return None
     finally:
         cursor.close()
         connection.close()
@@ -267,7 +268,7 @@ def get_expense_details_by_expense_id_and_user_id_from_user_personal_expenses_ta
 
     except mysql.connector.Error as e:
         print(f"Error fetching expense details from user_personal_expenses table using expense id and user id: {e}")
-        return False
+        return None
     finally:
         cursor.close()
         connection.close()
@@ -287,7 +288,7 @@ def delete_user_personal_expense_using_expense_id(expense_id):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "DELETE FROM user_personal_expenses WHERE expense_id = %s", (expense_id,)
+            "DELETE FROM user_personal_expenses WHERE id = %s", (expense_id,)
         )
         connection.commit()
         return True
@@ -336,8 +337,13 @@ def update_user_expenses_in_user_personal_expenses_table(expense_id, data):
     if not update_fields:
         return False
 
+    # Append the expense_id to the update_values for the WHERE clause
+    update_values.append(expense_id)
+
     # Construct the SQL query
-    update_query = f"UPDATE user_personal_expenses SET {', '.join(update_fields)} WHERE expense_id = %s"
+    update_query = f"UPDATE user_personal_expenses SET {', '.join(update_fields)} WHERE id = %s"
+    print('Update query', update_query)
+    print('Update values', update_values)
 
     try:
         cursor.execute(update_query, tuple(update_values))
