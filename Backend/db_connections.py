@@ -246,6 +246,32 @@ def get_user_id_from_username_in_users_table(username):
         cursor.close()
         connection.close()
 
+def get_username_from_user_id_in_users_table(user_id):
+    """
+        Function to retrieve the username from the user_id provided in the users table
+        :param user_id: Id of the user.
+        :return: Name of the user.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    query = "SELECT username FROM users WHERE user_id = %s"
+
+    try:
+        cursor.execute(query, (user_id,))
+        username = cursor.fetchone()
+        return username
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching username from users table using user_id: {e}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
+
 
 def get_expense_details_by_expense_id_and_user_id_from_user_personal_expenses_table(expense_id, user_id):
     """
@@ -342,8 +368,6 @@ def update_user_expenses_in_user_personal_expenses_table(expense_id, data):
 
     # Construct the SQL query
     update_query = f"UPDATE user_personal_expenses SET {', '.join(update_fields)} WHERE id = %s"
-    print('Update query', update_query)
-    print('Update values', update_values)
 
     try:
         cursor.execute(update_query, tuple(update_values))
@@ -357,3 +381,301 @@ def update_user_expenses_in_user_personal_expenses_table(expense_id, data):
         cursor.close()
         connection.close()
 
+
+# ----------------------------- Group feature endpoints -----------------------
+
+
+def add_new_group_to_groups_table(group_name, creator_user_id):
+    """
+        Insert a new group details into the groups table.
+        
+        :param group_name: The name of the group.
+        :param creator_user_id: The id of the user who created the group.
+        :return: True if the group was created successfully, False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    try:
+
+        query = "INSERT INTO groups (group_name, creator_user_id) VALUES (%s, %s)"
+        params = (group_name, creator_user_id)
+        cursor.execute(
+            query,
+            params
+        )
+        connection.commit()
+        return True
+    
+    except Exception as e:
+        print(f"Error during adding a new group details to the groups table - {e}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_group_name_from_group_id_in_group_table(group_id):
+    """
+        This function fetches the group name from the group id provided.
+        :param group_id: The id of the group.
+        :return: Name of the group.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+    
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        query = """
+                    SELECT group_name 
+                    FROM groups
+                    WHERE id = %s
+                """
+        cursor.execute(query, (group_id,))
+        group = cursor.fetchone()
+
+        if group:
+            return group['group_name']
+        else:
+            print(f"No group found with id {group_id}")
+            return None
+    
+    except mysql.connector.Error as e:
+        print(f"Error fetching group name for group id {group_id}: {e}")
+        return None
+
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_group_id_from_group_name_in_group_table(group_name):
+    """
+        This function fetches the group id from the group name provided.
+        :param group_name: The name of the group.
+        :return: ID of the group.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+    
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        query = """
+                    SELECT id
+                    FROM groups
+                    WHERE group_name = %s
+                """
+        cursor.execute(query, (group_name,))
+        group_id = cursor.fetchone()
+
+        if group_id:
+            return group_id['id']
+        else:
+            print(f"No group id found with name {group_name}")
+            return None
+    
+    except mysql.connector.Error as e:
+        print(f"Error fetching group id for group name {group_name}: {e}")
+        return None
+
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_creator_user_id_from_group_name_in_group_table(group_name):
+    """
+        This function fetches the creator user id from the group name provided.
+        :param group_name: The name of the group.
+        :return: User id of the creator.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+    
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        query = """
+                    SELECT creator_user_id
+                    FROM groups
+                    WHERE group_name = %s
+                """
+        cursor.execute(query, (group_name,))
+        creator_user_id = cursor.fetchone()
+
+        if creator_user_id:
+            return creator_user_id['creator_user_id']
+        else:
+            print(f"No creator user id found with name {group_name}")
+            return None
+    
+    except mysql.connector.Error as e:
+        print(f"Error fetching creator user id for group name {group_name}: {e}")
+        return None
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def update_group_name_in_groups_table_using_group_id(group_id, new_group_name):
+    """
+        This function is for updating the group name using the group id and new group name provided.
+        :param group_id: Id of the group to update name of.
+        :param new_group_name: New name of the group to set.
+        :return: True if the name was updated successfully else False.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    UPDATE groups SET group_name = %s WHERE group_id = %s
+                """
+        
+        cursor.execute(query, (new_group_name, group_id))
+        connection.commit()
+
+        return cursor.rowcount > 0  # Return true if any of the row updated, false otherwise
+    
+    except mysql.connector.Error as e:
+        print(f"Error updating group name for group_id {group_id}: {e}")
+        return False
+
+    finally:
+        cursor.close()
+        connection.close()
+
+# ------------------- Group Members table crud operations ----------------------
+
+def add_new_member_to_group_members_table(group_id, user_id):
+    """
+        Insert a new member into the group_members table.
+        
+        :param group_id: The id of the group.
+        :param user_id: The id of the user who is getting added to the group.
+        :return: True if the member was added successfully, False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    try:
+
+        query = "INSERT INTO group_members (group_id, user_id) VALUES (%s, %s)"
+        params = (group_id, user_id)
+        cursor.execute(
+            query,
+            params
+        )
+        connection.commit()
+        return True
+    
+    except Exception as e:
+        print(f"Error during adding a new member to the group_members table - {e}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_group_names_for_user(user_id):
+    """
+        This function fetches all the group names in which a particular user is in using its id from groups table.
+        :param user_id: The id of the user.
+        :return: A list of group names the user is a part of.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return []
+    
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        query = """
+                    SELECT g.group_name
+                    FROM groups g
+                    JOIN group_members gm ON g.id = gm.group_id
+                    WHERE gm.user_id = %s 
+                """
+        cursor.execute(query, (user_id,))
+        group_names = cursor.fetchall()
+
+        return [group_name['group_name'] for group_name in group_names]
+    
+    except mysql.connector.Error as e:
+        print(f"Error fetching group names for user_id {user_id}: {e}")
+        return []
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def add_expense_to_group_expenses_table(group_id, expense_name, 
+                                        amount, paid_by, date):
+    """
+        Insert a new expense details into the group_expenses table.
+        
+        :param group_id: The id of the group.
+        :param expense_name: The name of the expense getting added.
+        :param amount: Amount of the expense paid by the person.
+        :param paid_by: Id of the user who paid the expense.
+        :param date: Date of adding expense to the group.
+        :return: True if the expense was added successfully, False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    try:
+
+        query = "INSERT INTO group_expenses (group_id, expense_name, amount, paid_by, date) VALUES (%s, %s, %s, %s, %s)"
+        params = (group_id, expense_name, amount, paid_by, date)
+        cursor.execute(
+            query,
+            params
+        )
+        connection.commit()
+        return True
+    
+    except Exception as e:
+        print(f"Error during adding a new expense to the group_expenses table - {e}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_all_expenses_details_for_a_particular_group_from_group_expenses_table(group_id):
+    """
+        Retrieves all the expenses detailed related to a group from group_expenses table.
+        :param group_id: Id of the group passed for getting its related expenses.
+        :return : details of all the expenses in a group.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor(dictionary=True)
+
+    query = "SELECT * FROM group_expenses WHERE group_id = %s"
+
+    try:
+        cursor.execute(query, (group_id,))
+        user_id = cursor.fetchall()
+        return user_id
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching expense details from group_expenses table using group id: {e}")
+        return None
+    finally:
+        cursor.close()
+        connection.close() 
