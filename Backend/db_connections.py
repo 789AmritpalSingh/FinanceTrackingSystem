@@ -258,7 +258,7 @@ def get_username_from_user_id_in_users_table(user_id):
 
     cursor = connection.cursor()
 
-    query = "SELECT username FROM users WHERE user_id = %s"
+    query = "SELECT username FROM users WHERE id = %s"
 
     try:
         cursor.execute(query, (user_id,))
@@ -384,6 +384,7 @@ def update_user_expenses_in_user_personal_expenses_table(expense_id, data):
 
 # ----------------------------- Group feature endpoints -----------------------
 
+# ----------------------- Groups table crud operations -----------------
 
 def add_new_group_to_groups_table(group_name, creator_user_id):
     """
@@ -398,9 +399,11 @@ def add_new_group_to_groups_table(group_name, creator_user_id):
         return False
 
     cursor = connection.cursor()
+    print(f'Creater user id - {creator_user_id} and group name - {group_name}')
     try:
 
-        query = "INSERT INTO groups (group_name, creator_user_id) VALUES (%s, %s)"
+        # groups is a reserved keyword in mysql, so need to use quotes for it.
+        query = "INSERT INTO `groups` (group_name, creator_user_id) VALUES (%s, %s)"
         params = (group_name, creator_user_id)
         cursor.execute(
             query,
@@ -501,7 +504,7 @@ def get_creator_user_id_from_group_name_in_group_table(group_name):
     try:
         query = """
                     SELECT creator_user_id
-                    FROM groups
+                    FROM `groups`
                     WHERE group_name = %s
                 """
         cursor.execute(query, (group_name,))
@@ -537,7 +540,7 @@ def update_group_name_in_groups_table_using_group_id(group_id, new_group_name):
 
     try:
         query = """
-                    UPDATE groups SET group_name = %s WHERE group_id = %s
+                    UPDATE groups SET group_name = %s WHERE id = %s
                 """
         
         cursor.execute(query, (new_group_name, group_id))
@@ -552,6 +555,34 @@ def update_group_name_in_groups_table_using_group_id(group_id, new_group_name):
     finally:
         cursor.close()
         connection.close()
+
+def delete_group_from_groups_table_using_group_id(group_id):
+    """
+        This function deletes the group details using the group id provided.
+        :param group_id: Id of the group.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    DELETE FROM groups WHERE group_id = %s
+                """
+        
+        cursor.execute(query, (group_id,))
+        return True
+    
+    except mysql.connector.Error as e:
+        print(f"Error deleting group for group_id {group_id}: {e}")
+        return False
+
+    finally:
+        cursor.close()
+        connection.close()
+
 
 # ------------------- Group Members table crud operations ----------------------
 
@@ -618,6 +649,74 @@ def get_group_names_for_user(user_id):
         cursor.close()
         connection.close()
 
+def get_all_user_id_using_group_id_in_group_members_table(group_id):
+    """
+        This function fetches all the user id from the group members table using group id provided
+        for getting the list of all the users in a groups.
+        :param group_id: Id of the group.
+        :return user_id: Id of the user.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    try:
+        query = """
+                    SELECT user_id 
+                    FROM 
+                    group_members 
+                    WHERE 
+                    group_id = %s
+                """
+        
+        cursor.execute(
+            query,
+            (group_id,)
+        )
+
+        user_ids = cursor.fetchall()
+        return user_ids
+    
+    except mysql.connector.Error as e:
+        print(f"Error fetching user_id for group id {group_id}: {e}")
+        return []
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def delete_user_from_group_members_table(user_id):
+    """
+        This function is for removing particular user from the group members table using its id.
+        :param user_id: Id of the user.
+        :return: True if the user deleted successfully False otherwise
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    DELETE FROM group_members WHERE user_id = %s
+                """
+        
+        cursor.execute(query, (user_id,))
+        return True
+    
+    except mysql.connector.Error as e:
+        print(f"Error deleting user from the group for the user_id {user_id}: {e}")
+        return False
+
+    finally:
+        cursor.close()
+        connection.close()
+
+# --------------------- Group expenses table CRUD operations ----------------------
+
 
 def add_expense_to_group_expenses_table(group_id, expense_name, 
                                         amount, paid_by, date):
@@ -674,8 +773,391 @@ def get_all_expenses_details_for_a_particular_group_from_group_expenses_table(gr
         return user_id
 
     except mysql.connector.Error as e:
-        print(f"Error fetching expense details from group_expenses table using group id: {e}")
+        print(f"Error fetching expense details from group_expenses table using group id : {group_id}: {e}")
         return None
     finally:
         cursor.close()
         connection.close() 
+
+def get_all_expenses_details_for_a_particular_group_paid_by_particular_user_from_group_expenses_table(group_id, paid_by):
+    """
+        Retrieves all the expenses detailed related to a user in a particular group from group_expenses table using
+        group_id and paid_by i.e. user_id.
+        :param group_id: Id of the group passed for getting its related expenses.
+        :param paid_by: Id of the user who paid the expense in the group.
+        :return : details of all the expenses in a group paid by a particular user.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor(dictionary=True)
+
+    query = "SELECT * FROM group_expenses WHERE group_id = %s and paid_by = %s"
+
+    try:
+        cursor.execute(query, (group_id, paid_by))
+        user_id = cursor.fetchall()
+        return user_id
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching expense details from group_expenses table using group id - {group_id} and user_id - {user_id} : {e}")
+        return None
+    finally:
+        cursor.close()
+        connection.close() 
+
+def update_expense_details_for_a_particular_expense_using_the_expense_id(expense_id, data):
+    """
+        Function to update a group's expense in the group_expenses table.
+        
+        :param expense_id: The ID of the expense to update.
+        :param data: A dictionary containing the updated fields (e.g., amount, expense_name, date, paid_by).
+        :return: True if the update was successful, False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    # Prepare the update statement based on the fields provided in the data dictionary
+    update_fields = []
+    update_values = []
+
+    if 'amount' in data:
+        update_fields.append("amount = %s")
+        update_values.append(data['amount'])
+
+    if 'expense_name' in data:
+        update_fields.append("expense_name = %s")
+        update_values.append(data['expense_name'])
+
+    if 'date' in data:
+        update_fields.append("date = %s")
+        update_values.append(data['date'])
+
+    if 'paid_by' in data:
+        update_fields.append("paid_by = %s")
+        update_values.append(data['paid_by'])
+
+    # Ensure there are fields to update
+    if not update_fields:
+        return False
+
+    # Construct the SQL query
+    update_query = f"UPDATE group_expenses SET {', '.join(update_fields)} WHERE id = %s"
+    update_values.append(expense_id)  # Add expense_id to the parameters
+
+    try:
+        cursor.execute(update_query, tuple(update_values))
+        connection.commit()
+        return cursor.rowcount > 0  # Return true if any rows were updated
+
+    except mysql.connector.Error as e:
+        print(f"Error updating group expense with id {expense_id}: {e}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+def delete_expense_from_group_expenses_table_using_expense_id(expense_id):
+    """
+        This function removes a particular expense details for the expense id provided.
+        :param expense_id: ID of the expense to delete.
+        :return: True if the expense was deleted successfully.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    DELETE FROM group_expenses WHERE id = %s
+                """
+        
+        cursor.execute(query, (expense_id,))
+        return True
+    
+    except mysql.connector.Error as e:
+        print(f"Error deleting expense from the group expenses table using the expense id {expense_id}: {e}")
+        return False
+
+    finally:
+        cursor.close()
+        connection.close()
+
+def add_expense_shares(expense_id, user_shares):
+    """
+        This function is for adding the expense shares between the users in the expense_shares table.
+        :param expense_id: ID of the expense.
+        :param user_shares: A dictionary where keys are user_ids and the values are the share amount for each user.
+        :return: True if shares were added successfully, False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        for user_id, share_amount in user_shares.items():
+            # Determine if the user owes or is owed based on the share amount.
+            direction = 'owes' if share_amount > 0 else 'is_owed'
+            status = 'pending'
+            settled = False
+            settled_date = None
+
+            query = """
+                        INSERT INTO expense_shares (expense_id, user_id, share_amount, status, direction, settled, settled_date) VALUES (%s, %s, %s, %s, %s, %s)
+                    """
+            
+            cursor.execute(query, (expense_id, user_id, abs(share_amount), status, direction, settled, settled_date))
+
+            connection.commit()
+            return True
+
+    except mysql.connector.Error as e:
+        print(f"Error adding expense shares in expense_shares table: {e}")
+        connection.rollback()
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def get_expense_shares_from_expense_shares_using_expense_id(expense_id):
+    """
+    This function retrieves expense shares for a specific expense using the expense_id.
+
+    :param expense_id: ID of the expense in the expense_shares table.
+    :return: A list of dictionaries containing share details or None if error occurs.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return None
+
+    cursor = connection.cursor(dictionary=True)
+    try:
+        query = """
+                    SELECT * FROM expense_shares
+                    WHERE expense_id = %s
+                """
+        cursor.execute(query, (expense_id,))
+        shares = cursor.fetchall()
+        return shares
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching expense shares from expense_shares table using expense_id - {expense_id}: {e}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_shares_for_user_from_expense_shares_table_using_user_id(user_id):
+    """
+        This function retrieves all shares for a specific user using the user_id provided.
+
+        :param user_id: ID of the user.
+        :return: A list of dictionaries containing share details or None if error occurs.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return None
+
+    cursor = connection.cursor(dictionary=True)
+    try:
+        query = """
+                    SELECT * FROM expense_shares
+                    WHERE user_id = %s
+                """
+        cursor.execute(query, (user_id,))
+        shares = cursor.fetchall()
+        return shares
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching shares for user id {user_id}: {e}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_pending_shares_for_userfrom_expense_shares_table_using_user_id(user_id):
+    """
+        This function retrieves all pending shares for a specific user.
+
+        :param user_id: ID of the user.
+        :return: A list of dictionaries containing pending share details or None if error occurs.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return None
+
+    cursor = connection.cursor(dictionary=True)
+    try:
+        query = """
+                    SELECT * FROM expense_shares
+                    WHERE user_id = %s AND status = 'pending'
+                """
+        cursor.execute(query, (user_id,))
+        shares = cursor.fetchall()
+        return shares
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching pending shares for user id {user_id}: {e}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_share_details_using_expense_id_and_user_id(expense_id, user_id):
+    """
+        This function retrieves share details for a specific expense and user.
+
+        :param expense_id: ID of the expense.
+        :param user_id: ID of the user.
+        :return: Dictionary containing share details or None if error occurs.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return None
+
+    cursor = connection.cursor(dictionary=True)
+    try:
+        query = """
+                    SELECT * FROM expense_shares
+                    WHERE expense_id = %s AND user_id = %s
+                """
+        cursor.execute(query, (expense_id, user_id))
+        share_details = cursor.fetchone()
+        return share_details
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching share details for expense id {expense_id} and user id {user_id}: {e}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
+
+
+
+def update_expense_share_in_expense_shares_table_using_share_id(share_id, share_amount = None, status = None, direction = None, settled=None, settled_date=None):
+    """
+        This function updates a specific share details in the expense_shares table using the id of the share provided.
+        :param share_id: ID of the share to update.
+        :param share_amount: New share amount (optional).
+        :param status: New status (optional).
+        :param direction: New direction (optional).
+        :param settled: New settled state (optional).
+        :param settled_date: New settled date (optional).
+        :return: True if the share was updated successfully,   False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    updates = []
+    values = []
+
+    if share_amount is not None:
+        updates.append("share_amount = %s")
+        values.append(share_amount)
+
+    if status is not None:
+        updates.append("status = %s")
+        values.append(status)
+
+    if direction is not None:
+        updates.append("direction = %s")
+        values.append(direction)
+
+    if settled is not None:
+        updates.append("settled = %s")
+        values.append(settled)
+
+    if settled_date is not None:
+        updates.append("settled_date = %s")
+        values.append(settled_date)
+
+    if not updates:
+        return False
+    
+    values.append(share_id)
+    update_query = f"UPDATE expense_shares SET {', '.join(updates)} WHERE id = %s"
+
+    try:
+        cursor.execute(update_query, tuple(values))
+        connection.commit()
+        return cursor.rowcount > 0  # Return true if any rows were updated
+
+    except mysql.connector.Error as e:
+        print(f"Error updating expense share with id {share_id}: {e}")
+        connection.rollback()
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+def settle_all_shares_for_given_expense_id_in_expense_shares_table(expense_id):
+    """
+        This function settles all shares for a specific expense.
+
+        :param expense_id: ID of the expense.
+        :return: True if the shares were settled successfully, False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    try:
+        query = """
+                    UPDATE expense_shares
+                    SET settled = TRUE, settled_date = NOW()
+                    WHERE expense_id = %s AND settled = FALSE
+                """
+        cursor.execute(query, (expense_id,))
+        connection.commit()
+        return cursor.rowcount > 0
+
+    except mysql.connector.Error as e:
+        print(f"Error settling shares for expense id {expense_id}: {e}")
+        connection.rollback()
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+
+
+def delete_expense_share_from_expense_shares_table_using_share_id(share_id):
+    """
+        This function deletes a specific share from the expense_shares table using the share id provided.
+
+        :param share_id: ID of the share to delete.
+        :return: True if the share was deleted successfully, False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    try:
+        query = """
+                    DELETE FROM expense_shares
+                    WHERE id = %s
+                """
+        cursor.execute(query, (share_id,))
+        connection.commit()
+        return cursor.rowcount > 0  # Return true if any rows were deleted
+
+    except mysql.connector.Error as e:
+        print(f"Error deleting expense share with id {share_id}: {e}")
+        connection.rollback()
+        return False
+    finally:
+        cursor.close()
+        connection.close()
