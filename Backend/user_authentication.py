@@ -6,12 +6,13 @@ import db_connections as db
 
 class UserRegistration(Resource):
     """
-    UserRegistration handles the registration of new users.
-    It expects a JSON payload with 'username' and 'password'.
-    The password is hashed before storing it in the simulated database.
+        UserRegistration handles the registration of new users.
+        It expects a JSON payload with 'email', 'username' and 'password'.
+        The password is hashed before storing it in the simulated database.
     """
     def post(self):
         data = request.get_json()
+        email = data.get('email')
         username = data.get('username')
         password = data.get('password')
 
@@ -19,15 +20,15 @@ class UserRegistration(Resource):
         if user_details is not None:
             return {'message': 'User already exists'}, 400
 
-        db.create_user(username, password)
+        db.create_user(email, username, password)
         return {'message': 'User created successfully'}, 201
 
 
 class UserLogin(Resource):
     """
-    UserLogin handles the authentication of users.
-    It expects a JSON payload with 'username' and 'password'.
-    If the credentials are valid, it generates and returns a JWT token.
+        UserLogin handles the authentication of users.
+        It expects a JSON payload with 'username' and 'password'.
+        If the credentials are valid, it generates and returns a JWT token.
     """
     def post(self):
         data = request.get_json()
@@ -45,9 +46,9 @@ class UserLogin(Resource):
 
 class ProtectedResource(Resource):
     """
-    ProtectedResource demonstrates a protected endpoint.
-    Access to this resource requires a valid JWT token.
-    The token is verified and the current user's identity is retrieved.
+        ProtectedResource demonstrates a protected endpoint.
+        Access to this resource requires a valid JWT token.
+        The token is verified and the current user's identity is retrieved.
     """
     @jwt_required()
     def get(self):

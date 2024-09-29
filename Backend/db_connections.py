@@ -28,10 +28,11 @@ def get_db_connection():
         return None
 
 
-def create_user(username, password):
+def create_user(email, username, password):
     """
         Insert a new user account into the database.
         
+        :param email: Email of the user.
         :param username: The username of the new user.
         :param password: The plaintext password of the new user.
         :return: True if the user was created successfully, False otherwise.
@@ -45,8 +46,8 @@ def create_user(username, password):
         # Storing passwords in the form of hash to the database, for the security reasons.
         password_hash = generate_password_hash(password)
         cursor.execute(
-            "INSERT INTO users (username, password_hash) VALUES (%s, %s)",
-            (username, password_hash)
+            "INSERT INTO users (email, username, password_hash) VALUES (%s, %s, %s)",
+            (email, username, password_hash)
         )
         connection.commit()
         return True
@@ -434,7 +435,7 @@ def get_group_name_from_group_id_in_group_table(group_id):
     try:
         query = """
                     SELECT group_name 
-                    FROM groups
+                    FROM `groups`
                     WHERE id = %s
                 """
         cursor.execute(query, (group_id,))
@@ -469,7 +470,7 @@ def get_group_id_from_group_name_in_group_table(group_name):
     try:
         query = """
                     SELECT id
-                    FROM groups
+                    FROM `groups`
                     WHERE group_name = %s
                 """
         cursor.execute(query, (group_name,))
@@ -483,6 +484,78 @@ def get_group_id_from_group_name_in_group_table(group_name):
     
     except mysql.connector.Error as e:
         print(f"Error fetching group id for group name {group_name}: {e}")
+        return None
+
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_group_id_from_group_name_and_creator_user_id_in_group_table(group_name, creator_user_id):
+    """
+        This function fetches the group id from the group name and creator user id provided.
+        :param group_name: The name of the group.
+        :creator_user_id: ID of the creator of the group.
+        :return: ID of the group.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+    
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        query = """
+                    SELECT id
+                    FROM `groups`
+                    WHERE group_name = %s
+                    AND creator_user_id = %s
+                """
+        cursor.execute(query, (group_name, creator_user_id))
+        group_id = cursor.fetchone()
+
+        if group_id:
+            return group_id['id']
+        else:
+            print(f"No group id found with name {group_name} and creator user id - {creator_user_id}")
+            return None
+    
+    except mysql.connector.Error as e:
+        print(f"Error fetching group id for group name {group_name} and creator user id - {creator_user_id}: {e}")
+        return None
+
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_group_name_from_creator_user_id_in_group_table(creator_user_id):
+    """
+        This function fetches the group name from the creator user id provided in groups table.
+        :param creator_user_id: ID of the creator of the group.
+        :return: Name of the group.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+    
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    SELECT group_name
+                    FROM `groups`
+                    WHERE creator_user_id = %s
+                """
+        cursor.execute(query, (creator_user_id,))
+        group_names = cursor.fetchall()
+
+        if group_names:
+            return [group_name[0] for group_name in group_names]  # Return list of group names
+        else:
+            print(f"No group found with creator id - {creator_user_id}")
+            return None
+    
+    except mysql.connector.Error as e:
+        print(f"Error fetching group name for creator user id - {creator_user_id}: {e}")
         return None
 
     finally:
@@ -540,7 +613,7 @@ def update_group_name_in_groups_table_using_group_id(group_id, new_group_name):
 
     try:
         query = """
-                    UPDATE groups SET group_name = %s WHERE id = %s
+                    UPDATE `groups` SET group_name = %s WHERE id = %s
                 """
         
         cursor.execute(query, (new_group_name, group_id))
@@ -569,11 +642,12 @@ def delete_group_from_groups_table_using_group_id(group_id):
 
     try:
         query = """
-                    DELETE FROM groups WHERE group_id = %s
+                    DELETE FROM `groups` WHERE id = %s
                 """
         
         cursor.execute(query, (group_id,))
-        return True
+        connection.commit()  # Ensure the changes are committed
+        return cursor.rowcount > 0  # Return true if any of the row updated, false otherwise
     
     except mysql.connector.Error as e:
         print(f"Error deleting group for group_id {group_id}: {e}")
@@ -632,7 +706,7 @@ def get_group_names_for_user(user_id):
     try:
         query = """
                     SELECT g.group_name
-                    FROM groups g
+                    FROM `groups` g
                     JOIN group_members gm ON g.id = gm.group_id
                     WHERE gm.user_id = %s 
                 """
@@ -676,7 +750,7 @@ def get_all_user_id_using_group_id_in_group_members_table(group_id):
         )
 
         user_ids = cursor.fetchall()
-        return user_ids
+        return [user_id[0] for user_id in user_ids]
     
     except mysql.connector.Error as e:
         print(f"Error fetching user_id for group id {group_id}: {e}")
@@ -687,10 +761,11 @@ def get_all_user_id_using_group_id_in_group_members_table(group_id):
         connection.close()
 
 
-def delete_user_from_group_members_table(user_id):
+def delete_user_from_group_members_table(user_id, group_id):
     """
         This function is for removing particular user from the group members table using its id.
         :param user_id: Id of the user.
+        :param group_id: Id of the group.
         :return: True if the user deleted successfully False otherwise
     """
     connection = get_db_connection()
@@ -701,14 +776,15 @@ def delete_user_from_group_members_table(user_id):
 
     try:
         query = """
-                    DELETE FROM group_members WHERE user_id = %s
+                    DELETE FROM group_members WHERE user_id = %s AND group_id = %s
                 """
         
-        cursor.execute(query, (user_id,))
-        return True
+        cursor.execute(query, (user_id, group_id))
+        connection.commit()
+        return cursor.rowcount>0  # returns true if any of the rows were affected
     
     except mysql.connector.Error as e:
-        print(f"Error deleting user from the group for the user_id {user_id}: {e}")
+        print(f"Error deleting user from the group for the user_id {user_id} and group id -  {group_id}: {e}")
         return False
 
     finally:
