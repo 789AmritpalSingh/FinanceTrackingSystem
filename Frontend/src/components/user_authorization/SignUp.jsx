@@ -9,12 +9,12 @@ import {
   IconButton,
   Snackbar,
   Alert,
-  Link
+  Link,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import {Link as RouterLink} from "react-router-dom"; 
+import { Link as RouterLink } from "react-router-dom";
 
 const SignUp = () => {
   const [username, setUsername] = useState("");
@@ -26,16 +26,52 @@ const SignUp = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // 'success' or 'error'
 
+  // Validation functions
+  const isValidEmail = (email) => {
+    // Simple email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const isValidUsername = (username) => {
+    // At least 3 characters, only alphanumeric
+    const usernameRegex = /^[a-zA-Z0-9]{3,}$/;
+    return usernameRegex.test(username);
+  };
+
+  const isValidPassword = (password) => {
+    // At least 8 characters, 1 uppercase, 1 lowercase, and 1 number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+  };
+
   const handleSignUp = async (e) => {
     e.preventDefault();
 
-    // Case for missing field
-    if (!username || !password || !email) {
-      // If either email or username or password is missing
+    // Validate email, username, and password
+    if (!isValidEmail(email)) {
       setSnackbarSeverity("error");
-      setSnackbarMessage("Please fill all fields");
+      setSnackbarMessage("Please enter a valid email address");
       setSnackbarOpen(true);
-      return; // Prevent form submission
+      return;
+    }
+
+    if (!isValidUsername(username)) {
+      setSnackbarSeverity("error");
+      setSnackbarMessage(
+        "Username must be at least 3 characters long and contain only letters and numbers"
+      );
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (!isValidPassword(password)) {
+      setSnackbarSeverity("error");
+      setSnackbarMessage(
+        "Password must be at least 8 characters long, with at least one uppercase letter, one lowercase letter, one special character and one number"
+      );
+      setSnackbarOpen(true);
+      return;
     }
 
     const response = await fetch("http://localhost:5000/register", {
@@ -89,7 +125,7 @@ const SignUp = () => {
           p: 4,
           borderRadius: "10px",
           boxShadow: 3,
-          backgroundColor: "#f7f7f7",
+          backgroundColor: "black",
         }}
       >
         <Grid container spacing={2} maxWidth="400px">
@@ -98,7 +134,7 @@ const SignUp = () => {
               variant="h4"
               align="center"
               gutterBottom
-              sx={{ fontWeight: "bold", color: "#1976d2" }}
+              sx={{ fontWeight: "bold", color: "#00e676" }} // Green for a standout effect
             >
               Sign Up
             </Typography>
@@ -111,6 +147,14 @@ const SignUp = () => {
               fullWidth
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              sx={{
+                input: { color: "white" }, // White text inside input
+                label: { color: "white" }, // White label
+                fieldset: { borderColor: "white" }, // White border
+                "& .MuiOutlinedInput-root:hover fieldset": {
+                  borderColor: "#00e676",
+                }, // Green on hover
+              }}
             />
           </Grid>
 
@@ -121,6 +165,14 @@ const SignUp = () => {
               fullWidth
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              sx={{
+                input: { color: "white" }, // White text inside input
+                label: { color: "white" }, // White label
+                fieldset: { borderColor: "white" }, // White border
+                "& .MuiOutlinedInput-root:hover fieldset": {
+                  borderColor: "#00e676",
+                }, // Green on hover
+              }}
             />
           </Grid>
 
@@ -139,11 +191,20 @@ const SignUp = () => {
                       onClick={handleClickShowPassword}
                       onMouseDown={handleMouseDownPassword}
                       edge="end"
+                      sx={{ color: "white" }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
+              }}
+              sx={{
+                input: { color: "white" }, // White text inside input
+                label: { color: "white" }, // White label
+                fieldset: { borderColor: "white" }, // White border
+                "& .MuiOutlinedInput-root:hover fieldset": {
+                  borderColor: "#00e676",
+                }, // Green on hover
               }}
             />
           </Grid>
@@ -154,22 +215,33 @@ const SignUp = () => {
               color="primary"
               fullWidth
               onClick={handleSignUp}
-              sx={{ fontWeight: "bold", height: "50px", fontSize: "16px" }}
+              sx={{
+                backgroundColor: "#089404",
+                fontWeight: "bold",
+                height: "50px",
+                fontSize: "16px",
+                "&:hover": { backgroundColor: "#008000" }, // Darker green on hover
+              }}
             >
               Sign Up
             </Button>
           </Grid>
 
-          <Grid size={{xs: 12}}>
-            <Typography align="center" sx={{ mt: 1 }}>
+          <Grid size={{ xs: 12 }}>
+            <Typography align="center" sx={{ mt: 1, color: "white" }}>
+              Already have an account?{" "}
               <Link
                 component={RouterLink}
                 to="/login"
                 variant="body1"
                 underline="hover"
-                sx={{ color: "#1976d2", fontWeight: "bold" }}
+                style={{
+                  color: "#00e676",
+                  textDecoration: "none",
+                  fontWeight: "bold",
+                }}
               >
-                Already have an account?
+                Log in
               </Link>
             </Typography>
           </Grid>

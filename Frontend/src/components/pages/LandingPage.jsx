@@ -6,7 +6,7 @@ const LandingPage = () => {
   return (
     <Box
       sx={{
-        background: "linear-gradient(135deg, #F3F4F6, #E5E7EB)",
+        background: "#1A1A1A",
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
@@ -19,18 +19,25 @@ const LandingPage = () => {
           sx={{
             p: 4,
             borderRadius: "15px",
-            background: "#fff",
+            background: "black",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.4)",
+            ":hover": {
+              boxShadow: "0 4px 20px rgba(0,0,0,0.7)",
+            },
           }}
         >
           <Typography
             variant="h2"
             component="h1"
             gutterBottom
-            sx={{ fontWeight: "bold", color: "#333" }}
+            sx={{
+              fontWeight: "bold",
+              color: "#00e676",
+            }}
           >
             Welcome to Finance Tracker
           </Typography>
-          <Typography variant="h6" sx={{ color: "#555" }}>
+          <Typography variant="h6" sx={{ color: "white" }}>
             A smart way to manage your personal and group expenses. Keep track
             of your spending, settle group expenses with friends, and gain
             insights into your finances.
@@ -40,59 +47,94 @@ const LandingPage = () => {
             <Typography
               variant="h4"
               gutterBottom
-              sx={{ fontWeight: "bold", color: "#1976d2" }}
+              sx={{
+                fontWeight: "bold",
+                color: "#1976d2",
+              }}
             >
               Features
             </Typography>
             <Grid container spacing={2} justifyContent="center">
-              <Grid size={{xs: 12, sm: 6}}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Paper
                   elevation={3}
-                  sx={{ p: 3, borderRadius: "10px", height: "100%" }}
+                  sx={{
+                    p: 3,
+                    borderRadius: "10px",
+                    backgroundColor: "#333333",
+                    height: "100%",
+                    ":hover": {
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.7)",
+                    },
+                  }}
                 >
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "#00e676" }}>
                     Track Personal Expenses
                   </Typography>
-                  <Typography>
+                  <Typography variant="body2" sx={{color: "white"}}>
                     Monitor your personal expenses easily.
                   </Typography>
                 </Paper>
               </Grid>
-              <Grid size={{xs: 12, sm: 6}}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Paper
                   elevation={3}
-                  sx={{ p: 3, borderRadius: "10px", height: "100%" }}
+                  sx={{
+                    p: 3,
+                    borderRadius: "10px",
+                    backgroundColor: "#333333",
+                    height: "100%",
+                    ":hover": {
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.7)",
+                    },
+                  }}
                 >
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "#00e676" }}>
                     Manage Group Expenses
                   </Typography>
-                  <Typography>
+                  <Typography variant="body2" sx={{color: "white"}}>
                     Split bills and settle debts with your friends.
                   </Typography>
                 </Paper>
               </Grid>
-              <Grid size={{xs: 12, sm: 6}}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Paper
                   elevation={3}
-                  sx={{ p: 3, borderRadius: "10px", height: "100%" }}
+                  sx={{
+                    p: 3,
+                    borderRadius: "10px",
+                    backgroundColor: "#333333",
+                    height: "100%",
+                    ":hover": {
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.7)",
+                    },
+                  }}
                 >
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                  <Typography variant="h6" sx={{ fontWeight: "bold", color: "#00e676" }}>
                     Detailed Analytics
                   </Typography>
-                  <Typography>
+                  <Typography variant="body2" sx={{color: "white"}}>
                     Get insights on where you are spending the most.
                   </Typography>
                 </Paper>
               </Grid>
-              <Grid size={{xs: 12, sm: 6}}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Paper
                   elevation={3}
-                  sx={{ p: 3, borderRadius: "10px", height: "100%" }}
+                  sx={{
+                    p: 3,
+                    borderRadius: "10px",
+                    backgroundColor: "#333333",
+                    height: "100%",
+                    ":hover": {
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.7)",
+                    },
+                  }}
                 >
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                  <Typography variant="h6" sx={{ fontWeight: "bold", color: "#00e676" }}>
                     Real-time Notifications
                   </Typography>
-                  <Typography>
+                  <Typography variant="body2" sx={{color: "white"}}>
                     Receive alerts on payments and settlements.
                   </Typography>
                 </Paper>

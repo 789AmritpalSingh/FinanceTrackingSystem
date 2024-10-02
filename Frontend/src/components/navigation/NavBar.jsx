@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'; // Assuming you're using react-router f
 
 const NavBar = () => {
   return (
-    <AppBar position="sticky" sx={{backgroundColor: "rgba(0, 0, 0, 0.9)"}} >
+    <AppBar position="sticky" sx={{backgroundColor: "#000000"}} >
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           Finance Tracker

@@ -84,11 +84,11 @@ const Login = () => {
     <Container maxWidth="sm">
       <Box
         sx={{
-          mt: 6,
+          mt: 8,
           p: 4,
           borderRadius: "10px",
           boxShadow: 3,
-          backgroundColor: "#f7f7f7",
+          backgroundColor: "black",
         }}
       >
         <Grid container spacing={2} maxWidth="400px">
@@ -97,7 +97,7 @@ const Login = () => {
               variant="h4"
               align="center"
               gutterBottom
-              sx={{ fontWeight: "bold", color: "#1976d2" }}
+              sx={{ fontWeight: "bold", color: "#00e676" }} // Green for a standout effect
             >
               Login
             </Typography>
@@ -110,6 +110,12 @@ const Login = () => {
               fullWidth
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              sx={{
+                input: { color: "white" }, // White text inside input
+                label: { color: "white" }, // White label
+                fieldset: { borderColor: "white" }, // White border
+                "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00e676" }, // Green on hover
+              }}
             />
           </Grid>
 
@@ -128,11 +134,18 @@ const Login = () => {
                       onClick={handleClickShowPassword}
                       onMouseDown={handleMouseDownPassword}
                       edge="end"
+                      sx={{color: "white"}}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
+              }}
+              sx={{
+                input: { color: "white" }, // White text inside input
+                label: { color: "white" }, // White label
+                fieldset: { borderColor: "white" }, // White border
+                "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00e676" }, // Green on hover
               }}
             />
           </Grid>
@@ -143,21 +156,27 @@ const Login = () => {
               color="primary"
               fullWidth
               onClick={handleLogin}
-              sx={{ fontWeight: "bold", height: "50px", fontSize: "16px" }}
+              sx={{
+                backgroundColor: "#089404",
+                fontWeight: "bold",
+                height: "50px",
+                fontSize: "16px",
+                "&:hover": { backgroundColor: "#008000" }, // Darker green on hover
+              }}
             >
               Login
             </Button>
           </Grid>
 
           <Grid size={{xs: 12}}>
-            <Typography align="center" sx={{ mt: 1 }}>
+            <Typography align="center" sx={{ mt: 1,  color: "white"}}>
               Don't have an account?{" "}
               <Link
                 component={RouterLink}
                 to="/signup"
                 variant="body1"
                 underline="hover"
-                sx={{ color: "#1976d2", fontWeight: "bold" }}
+                style={{ color: "#00e676", textDecoration: "none", fontWeight: "bold" }}
               >
                 Create one
               </Link>
