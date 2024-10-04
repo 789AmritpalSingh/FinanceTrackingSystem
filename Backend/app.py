@@ -4,7 +4,7 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from user_authentication import UserRegistration, UserLogin, ProtectedResource
 from personal_expenses import add_individual_expense, get_user_expenses, delete_user_expenses, update_user_expense
-from group_expense import create_new_group, get_name_of_creator_of_the_group, update_group_name, delete_group, add_new_member_to_group, get_all_users_in_the_group, delete_member_from_group
+from group_expense import create_new_group, get_name_of_creator_of_the_group, update_group_name, delete_group, add_new_member_to_group, get_all_users_in_the_group, delete_member_from_group, add_expense_to_group
 from config import JWT_SECRET_KEY
 
 app = Flask(__name__)
@@ -39,6 +39,9 @@ app.add_url_rule('/add_new_member', 'add_new_member', add_new_member_to_group, m
 app.add_url_rule('/get_group_members', 'get_group_members', get_all_users_in_the_group, methods=['GET'])
 app.add_url_rule('/delete_group_member/<string:member_username>/<string:group_name>', 
                  'delete_group_member', delete_member_from_group, methods=['DELETE'])
+
+app.add_url_rule('/add_new_expense_to_group', 'add_new_expense_to_group', add_expense_to_group, methods=['POST'])
+
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -13,7 +13,7 @@ const LandingPage = () => {
         justifyContent: "center",
       }}
     >
-      <Container maxWidth="md" sx={{ textAlign: "center", mt: 4 }}>
+      <Container maxWidth="md" sx={{ textAlign: "center" }}>
         <Paper
           elevation={6}
           sx={{

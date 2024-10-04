@@ -249,3 +249,41 @@ def delete_member_from_group(member_username, group_name):
     else:
         return jsonify({"message": "Failed to delete group member."}), 500
     
+# ------------ Group expenses endpoints ----------------------
+
+@jwt_required()
+def add_expense_to_group():
+    """
+        Endpoint to add expense to the group.
+    """
+    data = request.get_json()
+    username = get_jwt_identity()
+    user_id_tuple = db.get_user_id_from_username_in_users_table(username)
+    group_name = data.get('group_name')
+    expense_name = data.get('expense_name')
+    amount = data.get('amount')
+
+    if not all([group_name, expense_name, amount]):
+        # If group name is not provided.
+        return jsonify({"message": "Group name, expense_name, amount should be provided to add an expense to the group."}), 400
+    
+    if not user_id_tuple:
+        # If user id is not found.
+        return jsonify({"message": "User id is not found."}), 400
+    
+    user_id = user_id_tuple[0]
+
+    # Get the id of the group using group name provided
+    group_id = db.get_group_id_from_group_name_in_group_table(group_name)
+
+    if not group_id:
+        # if the group where trying to add the member does not exist
+        return jsonify({"message": "Cannot add a new member as this group does not exist."}), 400
+
+    # Add new member to the group 
+    result = db.add_expense_to_group_expenses_table(group_id, expense_name, amount, user_id)
+
+    if result:
+        return jsonify({"message": "Expense added successfully!"}), 201
+    else:
+        return jsonify({"message": "Failed to add expense."}), 500

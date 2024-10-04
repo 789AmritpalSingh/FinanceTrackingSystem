@@ -14,7 +14,7 @@ import {
 import Grid from "@mui/material/Grid2";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -24,6 +24,7 @@ const Login = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // 'success' or 'error'
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -57,6 +58,9 @@ const Login = () => {
       setSnackbarSeverity("success");
       setSnackbarMessage("Login successful");
       setSnackbarOpen(true);
+
+      // Navigate to the personal expenses
+      navigate("/personal_expenses")
     } else {
       // Open snackbar showing error message
       setSnackbarSeverity("error");

@@ -795,7 +795,7 @@ def delete_user_from_group_members_table(user_id, group_id):
 
 
 def add_expense_to_group_expenses_table(group_id, expense_name, 
-                                        amount, paid_by, date):
+                                        amount, paid_by):
     """
         Insert a new expense details into the group_expenses table.
         
@@ -814,7 +814,7 @@ def add_expense_to_group_expenses_table(group_id, expense_name,
     try:
 
         query = "INSERT INTO group_expenses (group_id, expense_name, amount, paid_by, date) VALUES (%s, %s, %s, %s, %s)"
-        params = (group_id, expense_name, amount, paid_by, date)
+        params = (group_id, expense_name, amount, paid_by, datetime.now())
         cursor.execute(
             query,
             params
@@ -1006,10 +1006,10 @@ def add_expense_shares(expense_id, user_shares):
 
 def get_expense_shares_from_expense_shares_using_expense_id(expense_id):
     """
-    This function retrieves expense shares for a specific expense using the expense_id.
+        This function retrieves expense shares for a specific expense using the expense_id.
 
-    :param expense_id: ID of the expense in the expense_shares table.
-    :return: A list of dictionaries containing share details or None if error occurs.
+        :param expense_id: ID of the expense in the expense_shares table.
+        :return: A list of dictionaries containing share details or None if error occurs.
     """
     connection = get_db_connection()
     if connection is None:

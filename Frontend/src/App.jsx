@@ -4,6 +4,7 @@ import SignUp from "./components/user_authorization/SignUp";
 import NavBar from "./components/navigation/NavBar";
 import LandingPage from "./components/pages/LandingPage";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
+import PersonalExpenses from "./components/pages/PersonalExpenses";
 
 const theme = createTheme({
   palette: {
@@ -23,6 +24,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/personal_expenses" element={<PersonalExpenses />} />
         </Routes>
       </Router>
     </ThemeProvider>
