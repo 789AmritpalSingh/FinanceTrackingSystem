@@ -2,7 +2,7 @@ from flask import Flask
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from user_authentication import UserRegistration, UserLogin, ProtectedResource
+from user_authentication import UserRegistration, UserLogin, ProtectedResource, get_user_account_info, update_user_as_logged_out
 from personal_expenses import add_individual_expense, get_user_expenses, delete_user_expenses, update_user_expense
 from group_expense import create_new_group, get_name_of_creator_of_the_group, update_group_name, delete_group, add_new_member_to_group, get_all_users_in_the_group, delete_member_from_group, add_expense_to_group
 from config import JWT_SECRET_KEY
@@ -22,6 +22,12 @@ jwt = JWTManager(app)
 api.add_resource(UserRegistration, '/register')
 api.add_resource(UserLogin, '/login')
 api.add_resource(ProtectedResource, '/protected')
+
+# Endpoint for getting user account details 
+app.add_url_rule('/get_user_account_details', 'get_user_account_details', get_user_account_info, methods=['GET'])
+
+# Endpoint for updating user logout status
+app.add_url_rule('/update_user_log_out', 'update_user_log_out', update_user_as_logged_out, methods=['PUT'])
 
 # Personal Expense-related routes
 app.add_url_rule('/add_individual_expense', 'add_individual_expense', add_individual_expense, methods=['POST'])

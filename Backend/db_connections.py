@@ -1,6 +1,6 @@
 import mysql.connector
 from mysql.connector import Error
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 from datetime import datetime
 
 # Database configuration
@@ -60,7 +60,7 @@ def create_user(email, username, password):
         connection.close()
 
 
-def fetch_user(username):
+def fetch_user_details(username):
     """
         Fetch a user's credentials from the database.
         
@@ -102,8 +102,8 @@ def update_user_password(username, new_password):
     try:
         password_hash = generate_password_hash(new_password)
         cursor.execute(
-            "UPDATE users SET password_hash = %s WHERE username = %s",
-            (password_hash, username)
+            "UPDATE users SET password_hash = %s, account_credentials_last_updated_at = %s WHERE username = %s",
+            (password_hash, datetime.now(), username)
         )
         connection.commit()
         return True
@@ -115,12 +115,12 @@ def update_user_password(username, new_password):
         connection.close()
 
 
-def update_user_last_login_datetime(username):
+def update_user_as_logged_in(username):
     """
-        Update a user's last login time in the database.
+        Update a user's as logged in, in the database.
         
-        :param username: The username of the user for which to update the last login.
-        :return: True if the user's last login was updated successfully, False otherwise.
+        :param username: The username of the user for which to update the login.
+        :return: True if the user's login was updated successfully, False otherwise.
     """
     connection = get_db_connection()
     if connection is None:
@@ -129,13 +129,39 @@ def update_user_last_login_datetime(username):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "UPDATE users SET last_login = %s WHERE username = %s",
-            (datetime.now(), username)
+            "UPDATE users SET last_login = %s, is_logged_in = %s WHERE username = %s",
+            (datetime.now(), 0, username)
         )
         connection.commit()
-        return True
+        return cursor.rowcount>0
     except mysql.connector.Error as e:
-        print(f"Error updating user with username - {username} last login: {e}")
+        print(f"Error updating user with username - {username} login: {e}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+def update_user_as_logged_out(username):
+    """
+        Updating the user information as logged out in the database.
+        
+        :param username: The username of the user for which to update the log out details.
+        :return: True if the user's logout was updated successfully, False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            "UPDATE users SET last_logged_out = %s, is_logged_in = %s WHERE username = %s",
+            (datetime.now(), 1, username)
+        )
+        connection.commit()
+        return cursor.rowcount>0
+    except mysql.connector.Error as e:
+        print(f"Error updating user with username - {username} logout: {e}")
         return False
     finally:
         cursor.close()

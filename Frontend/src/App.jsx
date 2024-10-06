@@ -5,6 +5,10 @@ import NavBar from "./components/navigation/NavBar";
 import LandingPage from "./components/pages/LandingPage";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import PersonalExpenses from "./components/pages/PersonalExpenses";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { Provider } from "react-redux";
+import {store} from './redux/store';
+import useAuthCheck from "./components/custom_hooks/useAuthCheck";
 
 const theme = createTheme({
   palette: {
@@ -15,18 +19,30 @@ const theme = createTheme({
 });
 
 function App() {
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline /> {/* Add this to reset styles globally */}
-      <Router>
-        <NavBar />
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/personal_expenses" element={<PersonalExpenses />} />
-        </Routes>
-      </Router>
+      <Provider store={store}> {/* Wrap the app in Redux Provider */}
+        <Router>
+          <NavBar />
+          <Routes>
+            useAuthCheck()
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            {/* Wrap protected routes in PrivateRoute */}
+            <Route
+              path="/personal_expenses"
+              element={
+                <ProtectedRoute>
+                  <PersonalExpenses />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </Router>
+      </Provider>
     </ThemeProvider>
   );
 }

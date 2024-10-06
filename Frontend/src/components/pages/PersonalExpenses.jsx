@@ -63,7 +63,7 @@ const PersonalExpenses = () => {
             No expenses found.
           </Typography>
         ) : (
-          <TableContainer component={Paper}>
+          <TableContainer component={Paper} sx={{backgroundColor: "#000000", color: "white"}}>
             <Table>
               <TableHead>
                 <TableRow>

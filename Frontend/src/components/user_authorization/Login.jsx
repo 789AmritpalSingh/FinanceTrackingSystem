@@ -15,6 +15,8 @@ import Grid from "@mui/material/Grid2";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { login } from "../../redux/authSlice";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -25,6 +27,7 @@ const Login = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // 'success' or 'error'
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -50,14 +53,8 @@ const Login = () => {
 
     if (response.ok) {
       localStorage.setItem("token", data.access_token); // Store the JWT token
-      // Clear the fields after login
-      setUsername("");
-      setPassword("");
 
-      // Open snackbar showing successful login message
-      setSnackbarSeverity("success");
-      setSnackbarMessage("Login successful");
-      setSnackbarOpen(true);
+      dispatch(login()) // Dispatch the login action
 
       // Navigate to the personal expenses
       navigate("/personal_expenses")

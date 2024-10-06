@@ -1,8 +1,11 @@
 import React from "react";
 import { Container, Typography, Button, Box, Paper } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import useAuthCheck from "../custom_hooks/useAuthCheck";
 
 const LandingPage = () => {
+  useAuthCheck(); // Call the useAuthCheck hook to check authentication status, to redirect the user to particular page based on the login status
+
   return (
     <Box
       sx={{
