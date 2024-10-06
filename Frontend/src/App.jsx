@@ -8,7 +8,6 @@ import PersonalExpenses from "./components/pages/PersonalExpenses";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Provider } from "react-redux";
 import {store} from './redux/store';
-import useAuthCheck from "./components/custom_hooks/useAuthCheck";
 
 const theme = createTheme({
   palette: {

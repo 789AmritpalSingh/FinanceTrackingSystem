@@ -54,10 +54,10 @@ const Login = () => {
     if (response.ok) {
       localStorage.setItem("token", data.access_token); // Store the JWT token
 
-      dispatch(login()) // Dispatch the login action
+      dispatch(login()); // Dispatch the login action
 
       // Navigate to the personal expenses
-      navigate("/personal_expenses")
+      navigate("/personal_expenses");
     } else {
       // Open snackbar showing error message
       setSnackbarSeverity("error");
@@ -81,6 +81,13 @@ const Login = () => {
     setSnackbarOpen(false);
   };
 
+  // Handle key press event
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleLogin(e); // Trigger login when Enter is pressed
+    }
+  };
+
   return (
     <Container maxWidth="sm">
       <Box
@@ -92,8 +99,9 @@ const Login = () => {
           backgroundColor: "black",
         }}
       >
+        <form onSubmit={handleLogin}> {/* Wrap in a form */}
         <Grid container spacing={2} maxWidth="400px">
-          <Grid size={{xs: 12}}>
+          <Grid size={{ xs: 12 }}>
             <Typography
               variant="h4"
               align="center"
@@ -104,7 +112,7 @@ const Login = () => {
             </Typography>
           </Grid>
 
-          <Grid size={{xs: 12}}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               label="Username"
               variant="outlined"
@@ -115,12 +123,14 @@ const Login = () => {
                 input: { color: "white" }, // White text inside input
                 label: { color: "white" }, // White label
                 fieldset: { borderColor: "white" }, // White border
-                "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00e676" }, // Green on hover
+                "& .MuiOutlinedInput-root:hover fieldset": {
+                  borderColor: "#00e676",
+                }, // Green on hover
               }}
             />
           </Grid>
 
-          <Grid size={{xs: 12}}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               label="Password"
               variant="outlined"
@@ -135,7 +145,7 @@ const Login = () => {
                       onClick={handleClickShowPassword}
                       onMouseDown={handleMouseDownPassword}
                       edge="end"
-                      sx={{color: "white"}}
+                      sx={{ color: "white" }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -146,17 +156,19 @@ const Login = () => {
                 input: { color: "white" }, // White text inside input
                 label: { color: "white" }, // White label
                 fieldset: { borderColor: "white" }, // White border
-                "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00e676" }, // Green on hover
+                "& .MuiOutlinedInput-root:hover fieldset": {
+                  borderColor: "#00e676",
+                }, // Green on hover
               }}
             />
           </Grid>
 
-          <Grid size={{xs: 12}}>
+          <Grid size={{ xs: 12 }}>
             <Button
+              type="submit"
               variant="contained"
               color="primary"
               fullWidth
-              onClick={handleLogin}
               sx={{
                 backgroundColor: "#089404",
                 fontWeight: "bold",
@@ -169,15 +181,19 @@ const Login = () => {
             </Button>
           </Grid>
 
-          <Grid size={{xs: 12}}>
-            <Typography align="center" sx={{ mt: 1,  color: "white"}}>
+          <Grid size={{ xs: 12 }}>
+            <Typography align="center" sx={{ mt: 1, color: "white" }}>
               Don't have an account?{" "}
               <Link
                 component={RouterLink}
                 to="/signup"
                 variant="body1"
                 underline="hover"
-                style={{ color: "#00e676", textDecoration: "none", fontWeight: "bold" }}
+                style={{
+                  color: "#00e676",
+                  textDecoration: "none",
+                  fontWeight: "bold",
+                }}
               >
                 Create one
               </Link>
@@ -200,6 +216,7 @@ const Login = () => {
             </Alert>
           </Snackbar>
         </Grid>
+        </form>
       </Box>
     </Container>
   );

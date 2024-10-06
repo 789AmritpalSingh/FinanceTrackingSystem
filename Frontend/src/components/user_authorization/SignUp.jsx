@@ -128,6 +128,7 @@ const SignUp = () => {
           backgroundColor: "black",
         }}
       >
+        <form onSubmit={handleSignUp}> {/* Wrap in a form */}
         <Grid container spacing={2} maxWidth="400px">
           <Grid size={{ xs: 12 }}>
             <Typography
@@ -211,6 +212,7 @@ const SignUp = () => {
 
           <Grid size={{ xs: 12 }}>
             <Button
+              type="submit"
               variant="contained"
               color="primary"
               fullWidth
@@ -262,6 +264,7 @@ const SignUp = () => {
             </Alert>
           </Snackbar>
         </Grid>
+        </form>
       </Box>
     </Container>
   );

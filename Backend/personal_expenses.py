@@ -2,7 +2,6 @@ from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import db_connections as db
 
-
 @jwt_required()
 def add_individual_expense():
     """
