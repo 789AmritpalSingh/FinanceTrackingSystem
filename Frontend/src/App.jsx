@@ -26,7 +26,6 @@ function App() {
         <Router>
           <NavBar />
           <Routes>
-            useAuthCheck()
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
