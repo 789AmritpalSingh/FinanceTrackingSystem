@@ -18,10 +18,17 @@ import {
   Tooltip,
   Snackbar,
   Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import {
+  deleteExpense,
   setError,
   setExpenses,
   setLoading,
@@ -47,9 +54,27 @@ const PersonalExpenses = () => {
     date: "",
     description: "",
   }); // form state for new expense getting added.
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
 
   const handleModalOpen = () => setModalOpen(true);
   const handleModalClose = () => setModalOpen(false);
+
+  const handleDeleteClick = (expenseId) => {
+    setExpenseToDelete(expenseId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    if (expenseToDelete) {
+      handleDeleteExpense(expenseToDelete);
+      setDeleteDialogOpen(false);
+    }
+  };
 
   // Fetch expenses from backend
   const fetchExpenses = async () => {
@@ -121,6 +146,42 @@ const PersonalExpenses = () => {
     }
   };
 
+  const handleDeleteExpense = async (expenseId) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/delete_expense/${expenseId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        dispatch(deleteExpense(expenseId)); // Update the Redux state after deletion
+        console.log("Expense deleted successfully!");
+        setSnackbarSeverity("success");
+        setSnackbarMessage("Expense deleted successfully.");
+        setSnackbarOpen(true);
+        // Refresh the expenses list
+        // fetchExpenses();
+      } else {
+        console.error("Failed to delete expense.");
+        setSnackbarSeverity("error");
+        setSnackbarMessage("Failed to delete expense.");
+        setSnackbarOpen(true);
+      }
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      setSnackbarSeverity("error");
+      setSnackbarMessage(`Error deleting expense : ${error}`);
+      setSnackbarOpen(true);
+    }
+  };
   // Fetch expenses on component mount
   useEffect(() => {
     fetchExpenses();
@@ -225,6 +286,16 @@ const PersonalExpenses = () => {
                   >
                     Description
                   </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: "#00e676",
+                      fontWeight: "bold",
+                      fontSize: "16px",
+                    }}
+                  >
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -247,6 +318,16 @@ const PersonalExpenses = () => {
                     </TableCell>
                     <TableCell align="left" sx={{ color: "#e0e0e0" }}>
                       {expense.description}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Delete Expense">
+                        <IconButton
+                          onClick={() => handleDeleteClick(expense.id)}
+                          sx={{ color: "#ff1744" }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -433,6 +514,43 @@ const PersonalExpenses = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+        PaperProps={{
+          style: {
+            backgroundColor: "#2C2C2C", // Dark background for the modal
+            color: "#DDD", // Light text color for readability
+          },
+        }}
+      >
+        <DialogTitle id="alert-dialog-title" sx={{ color: "#FFF" }}>
+          {"Confirm Deletion"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText
+            id="alert-dialog-description"
+            sx={{ color: "#AAA" }}
+          >
+            Do you want to delete this expense? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} sx={{ color: "#00e676" }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            sx={{ color: "#ff1744" }}
+            autoFocus
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
