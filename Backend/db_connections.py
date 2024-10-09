@@ -198,7 +198,12 @@ def add_user_individual_expense(username, amount, category, date, description):
             "VALUES (%s, %s, %s, %s, %s)", (user_id, amount, category, date, description)
         )
         connection.commit()
-        return True
+
+        # Get the ID of the newly added expense
+        expense_id = cursor.lastrowid
+
+        return expense_id  # Return the new expense ID to the calling function
+    
     except mysql.connector.Error as e:
         print(f"Error adding user individual expense: {e}")
         return False

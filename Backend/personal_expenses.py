@@ -17,9 +17,9 @@ def add_individual_expense():
     if not all([amount, category, date]):
         return jsonify({"message": "Amount, category, and date are required fields."}), 400
 
-    result = db.add_user_individual_expense(username, amount, category, date, description)
-    if result:
-        return jsonify({"message": "Expense added successfully!"}), 201
+    expense_id = db.add_user_individual_expense(username, amount, category, date, description)
+    if expense_id:
+        return jsonify({"message": "Expense added successfully!", "expense_id": expense_id}), 201
     else:
         return jsonify({"message": "Failed to add expense."}), 500
 
