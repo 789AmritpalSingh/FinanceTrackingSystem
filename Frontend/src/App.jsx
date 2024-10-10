@@ -4,7 +4,7 @@ import SignUp from "./components/user_authorization/SignUp";
 import NavBar from "./components/navigation/NavBar";
 import LandingPage from "./components/pages/LandingPage";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
-import PersonalExpenses from "./components/pages/PersonalExpenses";
+import PersonalExpenses from "./components/personal_expenses/PersonalExpenses";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Provider } from "react-redux";
 import {store} from './redux/store';
