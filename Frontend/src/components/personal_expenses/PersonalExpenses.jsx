@@ -18,8 +18,6 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit"; // Import edit icon
 import {
   addExpense as addExpenseToRedux,
   deleteExpense as deleteExpenseFromRedux,
@@ -109,6 +107,18 @@ const PersonalExpenses = () => {
 
   const handleUpdateExpense = async () => {
     const token = localStorage.getItem("token");
+    // Validation: Check if all required fields are filled
+    if (
+      !expenseToUpdate.amount ||
+      !expenseToUpdate.category ||
+      !expenseToUpdate.date ||
+      !expenseToUpdate.description
+    ) {
+      setSnackbarMessage("All fields are required.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return; // Exit if validation fails
+    }
     try {
       await updateExpense(token, expenseToUpdate);
       dispatch(updateExpenseInRedux(expenseToUpdate));
@@ -124,6 +134,18 @@ const PersonalExpenses = () => {
 
   const handleAddExpense = async () => {
     const token = localStorage.getItem("token");
+    // Validation: Check if all required fields are filled
+    if (
+      !newExpense.amount ||
+      !newExpense.category ||
+      !newExpense.date ||
+      !newExpense.description
+    ) {
+      setSnackbarMessage("All fields are required.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return; // Exit if validation fails
+    }
     try {
       const data = await addExpense(token, newExpense);
       dispatch(addExpenseToRedux({ ...newExpense, id: data.expense_id }));

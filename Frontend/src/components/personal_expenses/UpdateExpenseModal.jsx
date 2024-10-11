@@ -112,11 +112,17 @@ const UpdateExpenseModal = ({
             inputProps={{
               style: { color: "#DDD" },
             }}
-            value={expenseToUpdate.date}
+            // Ensure the date value is formatted correctly for the input field
+            value={
+              expenseToUpdate.date
+                ? new Date(expenseToUpdate.date).toISOString().substring(0, 10)
+                : ""
+            }
+            // Update the state only when the user changes the date
             onChange={(e) =>
               setExpenseToUpdate({
                 ...expenseToUpdate,
-                date: e.target.value,
+                date: e.target.value || expenseToUpdate.date, // Retain existing date if input is empty
               })
             }
             sx={{
