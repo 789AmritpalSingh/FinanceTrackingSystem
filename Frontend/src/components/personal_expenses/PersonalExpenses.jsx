@@ -203,14 +203,24 @@ const PersonalExpenses = () => {
   return (
     <Container
       maxWidth={false}
-      sx={{ backgroundColor: "#1A1A1A", minHeight: "100vh", py: 4 }}
+      sx={{
+        backgroundColor: "#1A1A1A",
+        minHeight: "100vh",
+        py: 4,
+        px: { xs: 2, sm: 3, md: 6 },
+      }}
     >
       <Box sx={{ my: 4, color: "white" }}>
         <Typography
           variant="h4"
           align="center"
           gutterBottom
-          sx={{ fontWeight: "bold", color: "#00e676", mb: 4 }}
+          sx={{
+            fontWeight: "bold",
+            color: "#00e676",
+            mb: { xs: 2, md: 4 },
+            fontSize: { xs: "1.5rem", md: "2.5rem" },
+          }}
         >
           Personal Expenses
         </Typography>
@@ -223,7 +233,7 @@ const PersonalExpenses = () => {
             alignItems: "center",
             flexWrap: "wrap",
             gap: 2,
-            mb: 2,
+            mb: { xs: 1, md: 2 },
           }}
         >
           {/*Filter section*/}
@@ -241,11 +251,18 @@ const PersonalExpenses = () => {
                 sx={{ color: "#00e676" }}
               >
                 <AddIcon />
+                <Typography
+                  variant="button"
+                  sx={{
+                    ml: 1,
+                    color: "#00e676",
+                    fontSize: { xs: "0.8rem", md: "1rem" },
+                  }}
+                >
+                  Add Expense
+                </Typography>
               </IconButton>
             </Tooltip>
-            <Typography variant="button" sx={{ ml: 1, color: "#00e676" }}>
-              Add Expense
-            </Typography>
           </Box>
         </Box>
 
@@ -254,12 +271,28 @@ const PersonalExpenses = () => {
             <CircularProgress sx={{ color: "#00e676" }} />
           </Box>
         ) : error ? (
-          <Typography align="center" sx={{ mt: 4, color: "red" }}>
+          <Typography
+            align="center"
+            sx={{
+              mt: 4,
+              color: "red",
+              fontSize: { xs: "1.2rem", md: "1.8rem" }, // Responsive font size
+              fontWeight: "bold", // Make the text bold
+            }}
+          >
             {error} {/* Display error message */}
           </Typography>
-        ) : expenses.length === 0 ? (
-          <Typography align="center" sx={{ mt: 4, color: "lightgray" }}>
-            No expenses found.
+        ) : !expenses || expenses.length === 0 ? (
+          <Typography
+            align="center"
+            sx={{
+              mt: 4,
+              color: "lightgray",
+              fontSize: { xs: "1rem", md: "1.5rem" }, // Responsive font size
+              fontWeight: "bold", // Make the text bold
+            }}
+          >
+            You haven't recorded any expenses yet. Start adding your expenses to track them!
           </Typography>
         ) : (
           <TableContainer
@@ -269,6 +302,7 @@ const PersonalExpenses = () => {
               borderRadius: "10px",
               boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.8)",
               color: "white",
+              overflowX: "auto", // Scrollable on smaller screens
             }}
           >
             <Table>
@@ -279,7 +313,7 @@ const PersonalExpenses = () => {
                     sx={{
                       color: "#00e676",
                       fontWeight: "bold",
-                      fontSize: "16px",
+                      fontSize: { xs: "12px", md: "16px" },
                     }}
                   >
                     Amount
@@ -289,7 +323,7 @@ const PersonalExpenses = () => {
                     sx={{
                       color: "#00e676",
                       fontWeight: "bold",
-                      fontSize: "16px",
+                      fontSize: { xs: "12px", md: "16px" },
                     }}
                   >
                     Category
@@ -299,7 +333,7 @@ const PersonalExpenses = () => {
                     sx={{
                       color: "#00e676",
                       fontWeight: "bold",
-                      fontSize: "16px",
+                      fontSize: { xs: "12px", md: "16px" },
                     }}
                   >
                     Date
@@ -309,7 +343,7 @@ const PersonalExpenses = () => {
                     sx={{
                       color: "#00e676",
                       fontWeight: "bold",
-                      fontSize: "16px",
+                      fontSize: { xs: "12px", md: "16px" },
                     }}
                   >
                     Description
@@ -319,7 +353,7 @@ const PersonalExpenses = () => {
                     sx={{
                       color: "#00e676",
                       fontWeight: "bold",
-                      fontSize: "16px",
+                      fontSize: { xs: "12px", md: "16px" },
                     }}
                   >
                     Actions
@@ -327,14 +361,17 @@ const PersonalExpenses = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {expenses.map((expense) => (
-                  <ExpenseTableRow
-                    key={expense.id}
-                    expense={expense}
-                    handleUpdateClick={handleUpdateClick}
-                    handleDeleteClick={handleDeleteClick}
-                  />
-                ))}
+                {expenses
+                  .slice() // Create a shallow copy to avoid mutating the original array
+                  .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date in descending order
+                  .map((expense) => (
+                    <ExpenseTableRow
+                      key={expense.id}
+                      expense={expense}
+                      handleUpdateClick={handleUpdateClick}
+                      handleDeleteClick={handleDeleteClick}
+                    />
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>

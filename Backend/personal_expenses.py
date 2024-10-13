@@ -38,11 +38,11 @@ def get_user_expenses():
 
     expenses = db.get_user_individual_expenses(username, start_date, end_date, category)
     if not expenses:
-        return jsonify({"message": "No expenses found."}), 404
+        return jsonify({"message": "No expenses found.", "data": []}), 200
     
     print(f'Individual expenses - {expenses}')
 
-    return jsonify(expenses), 200
+    return jsonify({"data": expenses}), 200
 
 
 @jwt_required()

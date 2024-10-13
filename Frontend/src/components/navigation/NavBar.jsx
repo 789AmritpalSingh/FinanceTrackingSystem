@@ -1,13 +1,26 @@
-import React, { useEffect } from "react";
-import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
-import { Link, useNavigate } from "react-router-dom"; // For navigation
+import React, { useState } from "react";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+} from "@mui/material";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../redux/authSlice";
+import MenuIcon from "@mui/icons-material/Menu"; // For mobile menu icon
 
 const NavBar = () => {
-  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get authentication state from Redux
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false); // Mobile drawer state
 
   // Handle user logout
   const handleLogout = async () => {
@@ -27,12 +40,8 @@ const NavBar = () => {
       );
 
       if (response.ok) {
-        // Remove the token from localStorage
         localStorage.removeItem("token");
-
-        dispatch(logout()); // Dispatch the logout action
-
-        // Redirect to login page
+        dispatch(logout());
         navigate("/login");
       } else {
         console.error("Failed to log out");
@@ -42,22 +51,49 @@ const NavBar = () => {
     }
   };
 
+  // Handle drawer toggle
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  // Drawer for mobile view
+  const drawer = (
+    <Box sx={{ width: 250 }} onClick={handleDrawerToggle}>
+      <List>
+        <ListItem button component={Link} to="/personal_expenses">
+          <ListItemText primary="Personal Expenses" sx={{color: "white"}}/>
+        </ListItem>
+        {isAuthenticated ? (
+          <ListItem button onClick={handleLogout}>
+            <ListItemText primary="Logout" sx={{color: "white"}}/>
+          </ListItem>
+        ) : (
+          <>
+            <ListItem button component={Link} to="/login">
+              <ListItemText primary="Login" sx={{color: "white"}}/>
+            </ListItem>
+            <ListItem button component={Link} to="/signup">
+              <ListItemText primary="Sign Up" sx={{color: "white"}}/>
+            </ListItem>
+          </>
+        )}
+      </List>
+    </Box>
+  );
+
   return (
     <AppBar position="sticky" sx={{ backgroundColor: "#000000" }}>
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-        {/* Left Section: Finance Tracker Title and Personal Expenses Link */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <Typography variant="h5" component="div">
-            Finance Tracker
-          </Typography>
-          {/* Personal Expenses Page Link */}
+        {/* Left Section: Finance Tracker Title */}
+        <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
+          Finance Tracker
+        </Typography>
+
+        {/* Menu for desktop */}
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
           <Button color="inherit" component={Link} to="/personal_expenses">
             Personal Expenses
           </Button>
-        </Box>
-
-        {/* Right Section: Auth Links */}
-        <Box sx={{ display: "flex", gap: 2 }}>
           {isAuthenticated ? (
             <Button color="inherit" onClick={handleLogout}>
               Logout
@@ -73,7 +109,32 @@ const NavBar = () => {
             </>
           )}
         </Box>
+
+        {/* Mobile menu icon */}
+        <IconButton
+          color="inherit"
+          edge="start"
+          sx={{ display: { xs: "block", md: "none" } }}
+          onClick={handleDrawerToggle}
+        >
+          <MenuIcon />
+        </IconButton>
       </Toolbar>
+
+      {/* Drawer for mobile */}
+      <Drawer
+        anchor="right"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{ keepMounted: true }} // Better open performance on mobile
+        sx={{
+          "& .MuiDrawer-paper": {
+            backgroundColor: "#000000", // Dark background for the drawer menu
+          },
+        }}
+      >
+        {drawer}
+      </Drawer>
     </AppBar>
   );
 };

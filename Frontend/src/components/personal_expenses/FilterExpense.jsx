@@ -1,13 +1,20 @@
 import { Box, Button, TextField } from "@mui/material";
 import React from "react";
 
-{/*Filter section - for filtering the expenses based on start date, end date and category. */}
-const FilterExpense = ({
-    filters,
-    handleFilterChange,
-    handleSearch
-}) => (
-  <Box sx={{ flexGrow: 1, display: "flex", gap: 2 }}>
+{
+  /*Filter section - for filtering the expenses based on start date, end date and category. */
+}
+const FilterExpense = ({ filters, handleFilterChange, handleSearch }) => (
+  <Box
+    sx={{
+      flexGrow: 1,
+      display: "flex",
+      flexWrap: "wrap", // Enable wrapping for smaller screens
+      gap: 2,
+      // justifyContent: "space-between", // Space out elements on larger screens
+      alignItems: "center", // Ensure alignment in center
+    }}
+  >
     <TextField
       label="Start Date"
       type="date"
@@ -16,9 +23,12 @@ const FilterExpense = ({
       onChange={handleFilterChange}
       sx={{
         flexGrow: 0,
+        minWidth: { xs: "100%", sm: "150px", md: "200px" }, // Responsive width
         backgroundColor: "#2C2C2C",
         borderRadius: "20px", // Set the TextField's border radius
         "& .MuiOutlinedInput-root": {
+          height: { xs: "40px", md: "50px" }, // Smaller height for mobile
+          fontSize: { xs: "14px", md: "16px" }, // Smaller font size for mobile
           "& fieldset": {
             borderRadius: "20px", // Match the TextField's border radius
             borderColor: "transparent", // Set initial border color
@@ -47,9 +57,12 @@ const FilterExpense = ({
       onChange={handleFilterChange}
       sx={{
         flexGrow: 0,
+        minWidth: { xs: "100%", sm: "150px", md: "200px" }, // Responsive width
         backgroundColor: "#2C2C2C",
         borderRadius: "20px", // Set the TextField's border radius
         "& .MuiOutlinedInput-root": {
+          height: { xs: "40px", md: "50px" }, // Smaller height for mobile
+          fontSize: { xs: "14px", md: "16px" }, // Smaller font size for mobile
           "& fieldset": {
             borderRadius: "20px", // Match the TextField's border radius
             borderColor: "transparent", // Set initial border color
@@ -77,9 +90,12 @@ const FilterExpense = ({
       onChange={handleFilterChange}
       sx={{
         flexGrow: 0,
+        minWidth: { xs: "100%", sm: "150px", md: "200px" }, // Responsive width
         backgroundColor: "#2C2C2C",
         borderRadius: "20px", // Set the TextField's border radius
         "& .MuiOutlinedInput-root": {
+          height: { xs: "40px", md: "50px" }, // Smaller height for mobile
+          fontSize: { xs: "14px", md: "16px" }, // Smaller font size for mobile
           "& fieldset": {
             borderRadius: "20px", // Match the TextField's border radius
             borderColor: "transparent", // Set initial border color
@@ -93,7 +109,8 @@ const FilterExpense = ({
         },
       }}
       InputLabelProps={{
-        style: { color: "#00e676" },
+        style: { color: "#00e676" }, 
+        shrink: true
       }}
       InputProps={{
         style: { color: "white" },
@@ -103,16 +120,16 @@ const FilterExpense = ({
       variant="text"
       onClick={handleSearch}
       sx={{
-        minWidth: "150px",
+        minWidth: { xs: "100%", sm: "150px" }, // Button width is responsive
         bgcolor: "#089404", // Button color to match the focus border color
         "&:hover": {
           bgcolor: "#008000", // Darker shade for hover
         },
         borderRadius: "20px", // Add border radius here
-        fontSize: "16px",
+        fontSize: { xs: "14px", md: "16px" }, // Responsive font size
         fontWeight: "bold",
         color: "white",
-        height: "50px"
+        height: { xs: "40px", md: "50px" }, // Adjust height for smaller screens
       }}
     >
       Search

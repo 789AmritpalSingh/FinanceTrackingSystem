@@ -92,130 +92,165 @@ const Login = () => {
     <Container maxWidth="sm">
       <Box
         sx={{
-          mt: 8,
-          p: 4,
+          mt: { xs: 6, md: 8 },
+          p: { xs: 3, md: 4 },
           borderRadius: "10px",
           boxShadow: 3,
           backgroundColor: "black",
         }}
       >
-        <form onSubmit={handleLogin}> {/* Wrap in a form */}
-        <Grid container spacing={2} maxWidth="400px">
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant="h4"
-              align="center"
-              gutterBottom
-              sx={{ fontWeight: "bold", color: "#00e676" }} // Green for a standout effect
-            >
-              Login
-            </Typography>
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              label="Username"
-              variant="outlined"
-              fullWidth
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              sx={{
-                input: { color: "white" }, // White text inside input
-                label: { color: "white" }, // White label
-                fieldset: { borderColor: "white" }, // White border
-                "& .MuiOutlinedInput-root:hover fieldset": {
-                  borderColor: "#00e676",
-                }, // Green on hover
-              }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              label="Password"
-              variant="outlined"
-              fullWidth
-              type={showPassword ? "text" : "password"} // Toggle between text and password
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      edge="end"
-                      sx={{ color: "white" }}
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                input: { color: "white" }, // White text inside input
-                label: { color: "white" }, // White label
-                fieldset: { borderColor: "white" }, // White border
-                "& .MuiOutlinedInput-root:hover fieldset": {
-                  borderColor: "#00e676",
-                }, // Green on hover
-              }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              fullWidth
-              sx={{
-                backgroundColor: "#089404",
-                fontWeight: "bold",
-                height: "50px",
-                fontSize: "16px",
-                "&:hover": { backgroundColor: "#008000" }, // Darker green on hover
-              }}
-            >
-              Login
-            </Button>
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <Typography align="center" sx={{ mt: 1, color: "white" }}>
-              Don't have an account?{" "}
-              <Link
-                component={RouterLink}
-                to="/signup"
-                variant="body1"
-                underline="hover"
-                style={{
-                  color: "#00e676",
-                  textDecoration: "none",
+        <form onSubmit={handleLogin}>
+          {" "}
+          {/* Wrap in a form */}
+          <Grid container spacing={2} maxWidth="400px">
+            <Grid size={{ xs: 12 }}>
+              <Typography
+                variant="h4"
+                align="center"
+                gutterBottom
+                sx={{
                   fontWeight: "bold",
+                  color: "#00e676",
+                  fontSize: { xs: "2rem", md: "2.5rem" },
+                }} // Green for a standout effect
+              >
+                Login
+              </Typography>
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                label="Username"
+                variant="outlined"
+                fullWidth
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                sx={{
+                  input: { color: "white" }, // White text inside input
+                  label: { color: "white" }, // White label
+                  fieldset: { borderColor: "white" }, // White border
+                  "& .MuiOutlinedInput-root:hover fieldset": {
+                    borderColor: "#00e676",
+                  }, // Green on hover
+                  "& .MuiOutlinedInput-root:before": {
+                    borderColor: "white", // Custom border before interaction
+                  },
+                  "& .MuiOutlinedInput-root:after": {
+                    borderColor: "#00e676", // Green border after interaction
+                  },
+                  "& input:-webkit-autofill": {
+                    WebkitBoxShadow: "0 0 0 1000px black inset !important", // Black background for autofill
+                    WebkitTextFillColor: "white !important", // White text color on autofill
+                    transition: "background-color 5000s ease-in-out 0s", // Prevent flashing of the background color
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                label="Password"
+                variant="outlined"
+                fullWidth
+                type={showPassword ? "text" : "password"} // Toggle between text and password
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
+                        edge="end"
+                        sx={{ color: "white" }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  input: { color: "white" }, // White text inside input
+                  label: { color: "white" }, // White label
+                  fieldset: { borderColor: "white" }, // White border
+                  "& .MuiOutlinedInput-root:hover fieldset": {
+                    borderColor: "#00e676",
+                  }, // Green on hover
+                  "& .MuiOutlinedInput-root:before": {
+                    borderColor: "white", // Custom border before interaction
+                  },
+                  "& .MuiOutlinedInput-root:after": {
+                    borderColor: "#00e676", // Green border after interaction
+                  },
+                  "& input:-webkit-autofill": {
+                    WebkitBoxShadow: "0 0 0 1000px black inset !important", // Black background for autofill
+                    WebkitTextFillColor: "white !important", // White text color on autofill
+                    transition: "background-color 5000s ease-in-out 0s", // Prevent flashing of the background color
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                sx={{
+                  backgroundColor: "#089404",
+                  fontWeight: "bold",
+                  height: "50px",
+                  fontSize: { xs: "14px", md: "16px" },
+                  "&:hover": { backgroundColor: "#008000" }, // Darker green on hover
                 }}
               >
-                Create one
-              </Link>
-            </Typography>
-          </Grid>
+                Login
+              </Button>
+            </Grid>
 
-          {/* Snackbar for success or error messages */}
-          <Snackbar
-            open={snackbarOpen}
-            autoHideDuration={6000}
-            onClose={handleSnackbarClose}
-            anchorOrigin={{ vertical: "top", horizontal: "center" }}
-          >
-            <Alert
+            <Grid size={{ xs: 12 }}>
+              <Typography
+                align="center"
+                sx={{
+                  mt: 1,
+                  color: "white",
+                  fontSize: { xs: "0.9rem", md: "1rem" },
+                }}
+              >
+                Don't have an account?{" "}
+                <Link
+                  component={RouterLink}
+                  to="/signup"
+                  variant="body1"
+                  underline="hover"
+                  style={{
+                    color: "#00e676",
+                    textDecoration: "none",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Create one
+                </Link>
+              </Typography>
+            </Grid>
+
+            {/* Snackbar for success or error messages */}
+            <Snackbar
+              open={snackbarOpen}
+              autoHideDuration={6000}
               onClose={handleSnackbarClose}
-              severity={snackbarSeverity}
-              sx={{ width: "100%" }}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
             >
-              {snackbarMessage}
-            </Alert>
-          </Snackbar>
-        </Grid>
+              <Alert
+                onClose={handleSnackbarClose}
+                severity={snackbarSeverity}
+                sx={{ width: "100%" }}
+              >
+                {snackbarMessage}
+              </Alert>
+            </Snackbar>
+          </Grid>
         </form>
       </Box>
     </Container>
