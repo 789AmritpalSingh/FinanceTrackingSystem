@@ -13,8 +13,6 @@ import {
   CircularProgress,
   IconButton,
   Tooltip,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import AddIcon from "@mui/icons-material/Add";
@@ -35,6 +33,7 @@ import UpdateExpenseModal from "./UpdateExpenseModal";
 import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
 import SnackbarNotification from "./SnackbarNotification";
 import ExpenseTableRow from "./ExpenseTableRow";
+import FilterExpense from "./FilterExpense";
 
 const PersonalExpenses = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -44,6 +43,13 @@ const PersonalExpenses = () => {
   const { expenses, loading, error } = useSelector(
     (state) => state.personalExpenses
   );
+
+  // Add filter state - to filter by start date, end date and category.
+  const [filters, setFilters] = useState({
+    start_date: "",
+    end_date: "",
+    category: "",
+  });
 
   const [addModalOpen, setAddModalOpen] = useState(false); // Modal open/close state
   const [newExpense, setNewExpense] = useState({
@@ -163,7 +169,8 @@ const PersonalExpenses = () => {
     const token = localStorage.getItem("token");
     try {
       dispatch(setLoading(true));
-      const expenses = await getExpenses(token);
+      const { start_date, end_date, category } = filters; // Get filters
+      const expenses = await getExpenses(token, start_date, end_date, category); // Pass filters to API
       dispatch(setExpenses(expenses));
     } catch (error) {
       dispatch(setError(error.message));
@@ -175,10 +182,23 @@ const PersonalExpenses = () => {
     }
   };
 
+  // Trigger fetching expenses with filters when user clicks "Search"
+  const handleSearch = () => {
+    handleFetchExpenses();
+  };
+
   // Fetch expenses on component mount
   useEffect(() => {
     handleFetchExpenses();
   }, []);
+
+  // Handle filter input changes
+  const handleFilterChange = (e) => {
+    setFilters({
+      ...filters,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   return (
     <Container
@@ -190,28 +210,43 @@ const PersonalExpenses = () => {
           variant="h4"
           align="center"
           gutterBottom
-          sx={{ fontWeight: "bold", color: "#00e676" }}
+          sx={{ fontWeight: "bold", color: "#00e676", mb: 4 }}
         >
           Personal Expenses
         </Typography>
 
-        {/* Icon Button to Open Add Expense Modal */}
+        {/* Filters and Add Button */}
         <Box
           sx={{
             display: "flex",
-            justifyContent: "flex-end",
-            mb: 2,
+            justifyContent: "space-between",
             alignItems: "center",
+            flexWrap: "wrap",
+            gap: 2,
+            mb: 2,
           }}
         >
-          <Tooltip title="Add Expense" arrow>
-            <IconButton onClick={handleAddModalOpen} sx={{ color: "#00e676" }}>
-              <AddIcon />
-            </IconButton>
-          </Tooltip>
-          <Typography variant="button" sx={{ ml: 1, color: "#00e676" }}>
-            Add Expense
-          </Typography>
+          {/*Filter section*/}
+          <FilterExpense
+            filters={filters}
+            handleFilterChange={handleFilterChange}
+            handleSearch={handleSearch}
+          />
+
+          {/* Add Expense Button */}
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Tooltip title="Add Expense" arrow>
+              <IconButton
+                onClick={handleAddModalOpen}
+                sx={{ color: "#00e676" }}
+              >
+                <AddIcon />
+              </IconButton>
+            </Tooltip>
+            <Typography variant="button" sx={{ ml: 1, color: "#00e676" }}>
+              Add Expense
+            </Typography>
+          </Box>
         </Box>
 
         {loading ? (
