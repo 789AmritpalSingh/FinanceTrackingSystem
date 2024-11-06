@@ -1,7 +1,7 @@
 export const updateExpense = async (token, expenseToUpdate) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/update_expense/${expenseToUpdate.id}`,
+        `http://localhost:5000/update_group_name/${expenseToUpdate.id}`,
         {
           method: "PUT",
           headers: {

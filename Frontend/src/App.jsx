@@ -7,7 +7,8 @@ import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import PersonalExpenses from "./components/personal_expenses/PersonalExpenses";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Provider } from "react-redux";
-import {store} from './redux/store';
+import { store } from "./redux/store";
+import GroupExpenses from "./components/group_expenses/GroupExpenses";
 
 const theme = createTheme({
   palette: {
@@ -18,11 +19,12 @@ const theme = createTheme({
 });
 
 function App() {
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline /> {/* Add this to reset styles globally */}
-      <Provider store={store}> {/* Wrap the app in Redux Provider */}
+      <Provider store={store}>
+        {" "}
+        {/* Wrap the app in Redux Provider */}
         <Router>
           <NavBar />
           <Routes>
@@ -35,6 +37,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <PersonalExpenses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/group_expenses"
+              element={
+                <ProtectedRoute>
+                  <GroupExpenses />
                 </ProtectedRoute>
               }
             />

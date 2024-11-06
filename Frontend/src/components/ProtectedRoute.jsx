@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Navigate, useNavigate } from "react-router-dom";
 import { login, logout } from "../redux/authSlice";
 
+// This route is for protecting the main pages of the application from user to access them without logging in.
 const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true); // New loading state
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Access the authentication state from Redux
@@ -33,8 +34,6 @@ const ProtectedRoute = ({ children }) => {
         );
 
         const data = await user_details.json();
-        console.log('User details', user_details)
-        console.log('Data', data)
 
         if (user_details.ok && data.is_logged_in === 0) {
           console.log("Calling log in action")

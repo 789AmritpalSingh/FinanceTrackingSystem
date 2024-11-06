@@ -450,7 +450,10 @@ def add_new_group_to_groups_table(group_name, creator_user_id):
         params = (group_name, creator_user_id)
         cursor.execute(query, params)
         connection.commit()
-        return True
+
+        # Get the id of newly created group
+        group_id = cursor.lastrowid
+        return group_id
 
     except Exception as e:
         print(f"Error during adding a new group details to the groups table - {e}")
@@ -458,7 +461,6 @@ def add_new_group_to_groups_table(group_name, creator_user_id):
     finally:
         cursor.close()
         connection.close()
-
 
 def get_group_name_from_group_id_in_group_table(group_id):
     """
@@ -495,7 +497,6 @@ def get_group_name_from_group_id_in_group_table(group_id):
         cursor.close()
         connection.close()
 
-
 def get_group_id_from_group_name_in_group_table(group_name):
     """
     This function fetches the group id from the group name provided.
@@ -525,6 +526,41 @@ def get_group_id_from_group_name_in_group_table(group_name):
 
     except mysql.connector.Error as e:
         print(f"Error fetching group id for group name {group_name}: {e}")
+        return None
+
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_creator_user_id_from_group_id_in_groups_table(group_id):
+    """
+    This function fetches the creator user id from the groups table using the group id provided.
+    :param group_id: The ID of the group.
+    :return: creator user ID of the group.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    SELECT creator_user_id
+                    FROM `groups`
+                    WHERE id = %s
+                """
+        cursor.execute(query, (group_id,))
+        creator_user_id = cursor.fetchone()
+
+        if creator_user_id:
+            return creator_user_id[0]
+        else:
+            print(f"No creator user id found with group id - {group_id}")
+            return None
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching creator user id for group id - {group_id}: {e}")
         return None
 
     finally:
@@ -649,6 +685,35 @@ def get_creator_user_id_from_group_name_in_group_table(group_name):
         cursor.close()
         connection.close()
 
+def get_all_group_ids_from_groups_table():
+    """
+    This function fetches all the group ids from the groups table.
+    :return: return list of all group ids in the groups table.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return []
+
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    SELECT id
+                    FROM `groups` 
+                """
+        cursor.execute(query)
+        group_ids = cursor.fetchall()
+
+        # Unpack the tuple and return a list of group ids
+        return [group_id[0] for group_id in group_ids]
+    
+    except mysql.connector.Error as e:
+        print(f"Error fetching group ids from groups table: {e}")
+        return []
+
+    finally:
+        cursor.close()
+        connection.close()
 
 def update_group_name_in_groups_table_using_group_id(group_id, new_group_name):
     """
@@ -714,7 +779,6 @@ def delete_group_from_groups_table_using_group_id(group_id):
         cursor.close()
         connection.close()
 
-
 # ------------------- Group Members table crud operations ----------------------
 
 
@@ -737,7 +801,9 @@ def add_new_member_to_group_members_table(group_id, user_id):
         params = (group_id, user_id)
         cursor.execute(query, params)
         connection.commit()
-        return True
+        # Get the id of newly added member to group
+        group_member_id = cursor.lastrowid
+        return group_member_id
 
     except Exception as e:
         print(f"Error during adding a new member to the group_members table - {e}")
@@ -745,7 +811,6 @@ def add_new_member_to_group_members_table(group_id, user_id):
     finally:
         cursor.close()
         connection.close()
-
 
 def get_group_names_for_user(user_id):
     """
@@ -872,12 +937,14 @@ def add_expense_to_group_expenses_table(group_id, expense_name, amount, paid_by)
         query = "INSERT INTO group_expenses (group_id, expense_name, amount, paid_by, date) VALUES (%s, %s, %s, %s, %s)"
         params = (group_id, expense_name, amount, paid_by, datetime.now())
         cursor.execute(query, params)
+        # Get the auto-incremented expense_id of the inserted row
+        expense_id = cursor.lastrowid
         connection.commit()
-        return True
+        return expense_id
 
     except Exception as e:
         print(f"Error during adding a new expense to the group_expenses table - {e}")
-        return False
+        return None
     finally:
         cursor.close()
         connection.close()
@@ -1032,56 +1099,31 @@ def delete_expense_from_group_expenses_table_using_expense_id(expense_id):
         cursor.close()
         connection.close()
 
-
-def add_expense_shares(expense_id, user_shares):
+def add_expense_share(expense_id, user_id, share_amount, status, direction, settled, settled_date):
     """
-    This function is for adding the expense shares between the users in the expense_shares table.
-    :param expense_id: ID of the expense.
-    :param user_shares: A dictionary where keys are user_ids and the values are the share amount for each user.
-    :return: True if shares were added successfully, False otherwise.
+        Insert a user's share of an expense into the `expense_shares` table.
     """
     connection = get_db_connection()
     if connection is None:
         return False
 
     cursor = connection.cursor()
-
     try:
-        for user_id, share_amount in user_shares.items():
-            # Determine if the user owes or is owed based on the share amount.
-            direction = "owes" if share_amount > 0 else "is_owed"
-            status = "pending"
-            settled = False
-            settled_date = None
-
-            query = """
-                        INSERT INTO expense_shares (expense_id, user_id, share_amount, status, direction, settled, settled_date) VALUES (%s, %s, %s, %s, %s, %s)
-                    """
-
-            cursor.execute(
-                query,
-                (
-                    expense_id,
-                    user_id,
-                    abs(share_amount),
-                    status,
-                    direction,
-                    settled,
-                    settled_date,
-                ),
-            )
-
-            connection.commit()
-            return True
+        query = """
+                    INSERT INTO expense_shares (expense_id, user_id, share_amount, status, direction, settled, settled_date)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+        cursor.execute(query, (expense_id, user_id, share_amount, status, direction, settled, settled_date))
+        connection.commit()
+        return True
 
     except mysql.connector.Error as e:
-        print(f"Error adding expense shares in expense_shares table: {e}")
+        print(f"Error adding expense share: {e}")
         connection.rollback()
         return False
     finally:
         cursor.close()
         connection.close()
-
 
 def get_expense_shares_from_expense_shares_using_expense_id(expense_id):
     """
@@ -1143,7 +1185,7 @@ def get_shares_for_user_from_expense_shares_table_using_user_id(user_id):
         connection.close()
 
 
-def get_pending_shares_for_userfrom_expense_shares_table_using_user_id(user_id):
+def get_pending_shares_for_user_from_expense_shares_table_using_user_id(user_id):
     """
     This function retrieves all pending shares for a specific user.
 
@@ -1269,6 +1311,39 @@ def update_expense_share_in_expense_shares_table_using_share_id(
         cursor.close()
         connection.close()
 
+def get_pending_shares_between_users(user_id, settle_with_user_id):
+    """
+        Retrieve all pending expense shares between two users.
+
+        :param user_id: ID of the authenticated user.
+        :param settle_with_user_id: ID of the user to settle expenses with.
+        :return: List of dictionaries containing pending share details or None if error occurs.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return None
+
+    cursor = connection.cursor(dictionary=True)
+    try:
+        query = """
+                    SELECT * FROM expense_shares
+                    WHERE user_id = %s AND settled = FALSE
+                    AND EXISTS (
+                        SELECT 1 FROM expense_shares AS es
+                        WHERE es.expense_id = expense_shares.expense_id
+                        AND es.user_id = %s
+                    )
+                """
+        cursor.execute(query, (user_id, settle_with_user_id))
+        shares = cursor.fetchall()
+        return shares
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching pending shares between users {user_id} and {settle_with_user_id}: {e}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
 
 def settle_all_shares_for_given_expense_id_in_expense_shares_table(expense_id):
     """

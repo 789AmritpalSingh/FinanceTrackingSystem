@@ -63,6 +63,9 @@ const NavBar = () => {
         <ListItem button component={Link} to="/personal_expenses">
           <ListItemText primary="Personal Expenses" sx={{color: "white"}}/>
         </ListItem>
+        <ListItem button component={Link} to="/group_expenses">
+          <ListItemText primary="Group Expenses" sx={{color: "white"}}/>
+        </ListItem>
         {isAuthenticated ? (
           <ListItem button onClick={handleLogout}>
             <ListItemText primary="Logout" sx={{color: "white"}}/>
@@ -93,6 +96,9 @@ const NavBar = () => {
         <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
           <Button color="inherit" component={Link} to="/personal_expenses">
             Personal Expenses
+          </Button>
+          <Button color="inherit" component={Link} to="/group_expenses">
+            Group Expenses
           </Button>
           {isAuthenticated ? (
             <Button color="inherit" onClick={handleLogout}>

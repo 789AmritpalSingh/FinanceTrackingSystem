@@ -1,6 +1,7 @@
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import db_connections as db
+from datetime import datetime
 
 # ----------------------- Endpoints for the groups table --------------------------
 # ----------- Creating the group, getting the name of the group, deleting the group and updating the name of the group.
@@ -25,9 +26,13 @@ def create_new_group():
     
     user_id = user_id_tuple[0]
 
-    result = db.add_new_group_to_groups_table(group_name, user_id)
-    if result:
-        return jsonify({"message": "Group created successfully!"}), 201
+    group_id = db.add_new_group_to_groups_table(group_name, user_id)
+
+    # using the group id add the creator of the group to group as well
+    db.add_new_member_to_group_members_table(group_id, user_id)
+
+    if group_id:
+        return jsonify({"message": "Group created successfully!", "group_id": group_id}), 201
     else:
         return jsonify({"message": "Failed to create a group."}), 500
     
@@ -49,9 +54,10 @@ def get_name_of_creator_of_the_group():
     return jsonify(creator_username_of_group), 200
 
 @jwt_required()
-def update_group_name(group_name):
+def update_group_name(group_id):
     """
         Function for changing the name of the group.
+        :param group_id: ID of the group for which to change the name.
     """
     username = get_jwt_identity()
     data = request.get_json()  # Get JSON data from the request body
@@ -64,23 +70,13 @@ def update_group_name(group_name):
     if user_id is None:
         return jsonify({"message": "User not found."}), 404
 
-    # Ensure the user trying to delete the group exists and is the creator of the group
-    group_names = db.get_group_name_from_creator_user_id_in_group_table(user_id)
-
-    print('Group names of the user', group_names)
-
-    if not group_names:
-        # This user is not the creator of any group
-        print('Not the creator of any group')
-        return jsonify({"message": "Only creator of the group can delete the group."}), 404
+    # Ensure the user trying to update the group name is the creator of the group
+    creator_user_id = db.get_creator_user_id_from_group_id_in_groups_table(group_id)
     
-    if group_name not in group_names:
-        # if the group to delete is not present in the list of group that this user has creator, means user is not creator of this group.
-        print('Only creator can delete')
-        return jsonify({"message": "Only creator of the group can delete the group"}), 404
-    
-    # Get the id of the group using name of the group and id of the creator.
-    group_id = db.get_group_id_from_group_name_and_creator_user_id_in_group_table(group_name, user_id)
+    if creator_user_id != user_id:
+        # if the user trying to update the group name is not the creator of the group
+        print('Only creator can update the group name')
+        return jsonify({"message": "Only creator of the group can update the group name"}), 404
 
     # Update the group name with the new name
     result = db.update_group_name_in_groups_table_using_group_id(group_id, new_group_name)
@@ -90,10 +86,10 @@ def update_group_name(group_name):
         return jsonify({"message": "Failed to update group name."}), 500
 
 @jwt_required()
-def delete_group(group_name):
+def delete_group(group_id):
     """
         This function is for deleting the group. Only creator of the group is authorized to deleted the group.
-        :param group_name: Name of the group to delete.
+        :param group_id: ID of the group to delete.
     """
     username = get_jwt_identity()
 
@@ -104,23 +100,13 @@ def delete_group(group_name):
     if user_id is None:
         return jsonify({"message": "User not found."}), 404
 
-    # Ensure the user trying to delete the group exists and is the creator of the group
-    group_names = db.get_group_name_from_creator_user_id_in_group_table(user_id)
-
-    print('Group names of the user', group_names)
-
-    if not group_names:
-        # This user is not the creator of any group
-        print('Not the creator of any group')
-        return jsonify({"message": "Only creator of the group can delete the group."}), 404
+    # Ensure the user trying to delete the group name is the creator of the group
+    creator_user_id = db.get_creator_user_id_from_group_id_in_groups_table(group_id)
     
-    if group_name not in group_names:
-        # if the group to delete is not present in the list of group that this user has creator, means user is not creator of this group.
-        print('Only creator can delete')
+    if creator_user_id != user_id:
+        # if the user trying to delete the group is not the creator of the group
+        print('Only creator can delete the group')
         return jsonify({"message": "Only creator of the group can delete the group"}), 404
-    
-    # Get the id of the group using name of the group and id of the creator.
-    group_id = db.get_group_id_from_group_name_and_creator_user_id_in_group_table(group_name, user_id)
 
     # Delete the group finally
     result = db.delete_group_from_groups_table_using_group_id(group_id)
@@ -138,13 +124,13 @@ def add_new_member_to_group():
         Endpoint to add a new member to the group.
     """
     data = request.get_json()
-    username = get_jwt_identity()
+    username = data.get('username')  # Username of the user getting added to the group
     user_id_tuple = db.get_user_id_from_username_in_users_table(username)
-    group_name = data.get('group_name')
+    group_id = data.get('group_id')
 
-    if not group_name:
+    if not group_id:
         # If group name is not provided.
-        return jsonify({"message": "Group name should be provided to add a member to the group."}), 400
+        return jsonify({"message": "Group id should be provided to add a member to the group."}), 400
     
     if not user_id_tuple:
         # If user id is not found.
@@ -152,18 +138,17 @@ def add_new_member_to_group():
     
     user_id = user_id_tuple[0]
 
-    # Get the id of the group using group name provided
-    group_id = db.get_group_id_from_group_name_in_group_table(group_name)
+    all_group_ids = db.get_all_group_ids_from_groups_table()
 
-    if not group_id:
+    if group_id not in all_group_ids:
         # if the group where trying to add the member does not exist
         return jsonify({"message": "Cannot add a new member as this group does not exist."}), 400
 
     # Add new member to the group 
-    result = db.add_new_member_to_group_members_table(group_id, user_id)
+    new_member_id = db.add_new_member_to_group_members_table(group_id, user_id)
 
-    if result:
-        return jsonify({"message": "New member added successfully!"}), 201
+    if new_member_id:
+        return jsonify({"message": "New member added successfully!", "member_id": new_member_id}), 201
     else:
         return jsonify({"message": "Failed to add new member."}), 500
     
@@ -172,47 +157,66 @@ def get_all_users_in_the_group():
     """
         Endpoint to retreive the name of all the users in a group.
     """
-    group_name = request.args.get('group_name')
-    if not group_name:
-        # If group name is not provided.
-        return jsonify({"message": "Group name should be provided to get list of all the members of the group."}), 400
-    
-    # Get the id of the group using group name provided
-    group_id = db.get_group_id_from_group_name_in_group_table(group_name)
-
+    group_id = request.args.get('group_id')
     if not group_id:
+        # If group id is not provided.
+        return jsonify({"message": "Group id should be provided to get list of all the members of the group."}), 400
+
+    all_group_ids = db.get_all_group_ids_from_groups_table()
+
+    if group_id not in all_group_ids:
         # if the group where trying to add the member does not exist
-        return jsonify({"message": "Cannot add a new member as this group does not exist."}), 400
+        return jsonify({"message": "Cannot get the list of all the members in the group as this group does not exist."}), 400
     
     # Get list of all the users in the group
-    result = db.get_all_user_id_using_group_id_in_group_members_table(group_id)
+    group_members = db.get_all_user_id_using_group_id_in_group_members_table(group_id)
 
-    if result:
-        return jsonify(result), 200
+    if group_members:
+        return jsonify({"data": group_members}), 200
     
     else:
-        return jsonify({"message": "Cannot get any members in this group"}), 500
+        return jsonify({"message": "Cannot get any members in this group", "data": []}), 500
     
 @jwt_required()
-def delete_member_from_group(member_username, group_name):
+def get_all_group_names_user_is_involved_in():
     """
-        This function is for removing a member from the group. Only creator of the group is authorized to remove the member from the group.
-        :param member_username: Name of the member to remove.
+        Endpoint to retreive the name of all the groups the user is involved in.
     """
     username = get_jwt_identity()
 
-    # Retrieve creator user ID from the database using the username
+    # Retrieve user ID from the database using the username
     user_id_tuple_result = db.get_user_id_from_username_in_users_table(username)
     user_id = user_id_tuple_result[0] if user_id_tuple_result else None
 
-    # Get the id of the group using name of the group and id of the creator.
-    group_id = db.get_group_id_from_group_name_and_creator_user_id_in_group_table(group_name, user_id)
-
-    # retrieve the member to be removed user id from the database using its username
-    member_user_id_tuple  = db.get_user_id_from_username_in_users_table(member_username)
-    member_user_id = member_user_id_tuple[0] if member_user_id_tuple else None
-
     if user_id is None:
+        return jsonify({"message": "User not found."}), 404
+    
+    # Get list of all the groups in which particular user is involved in.
+    group_names = db.get_group_names_for_user(user_id)
+
+    if group_names:
+        return jsonify({"data": group_names}), 200
+    
+    else:
+        return jsonify({"message": "Cannot find any group for this user.", "data": []}), 500
+    
+@jwt_required()
+def delete_member_from_group(member_user_id, group_id):
+    """
+        This function is for removing a member from the group. Only creator of the group is authorized to remove the member from the group.
+        :param member_user_id: user ID of the member to remove.
+        :param group_id: ID of the group.
+    """
+    username = get_jwt_identity()
+
+    # Retrieve user trying to delete user ID from the database using the username
+    user_id_tuple_result = db.get_user_id_from_username_in_users_table(username)
+    user_id = user_id_tuple_result[0] if user_id_tuple_result else None
+
+    group_creator_user_id = db.get_creator_user_id_from_group_id_in_groups_table(group_id)
+
+    if user_id != group_creator_user_id:
+        # If user is not the creator of the group.
         return jsonify({"message": "You are not allowed to remove the member from the group."}), 404
     
     if not member_user_id:
@@ -226,21 +230,6 @@ def delete_member_from_group(member_username, group_name):
         # If the member to be removed is not the part of this group
         return jsonify({"message": "This member cannot be removed because of being not a part of this group."}), 404
 
-    # Ensure the user trying to remove the member from the group exists and is the creator of the group
-    group_names = db.get_group_name_from_creator_user_id_in_group_table(user_id)
-
-    print('Group names of the user', group_names)
-
-    if not group_names:
-        # This user is not the creator of any group
-        print('Not the creator of any group')
-        return jsonify({"message": "Only creator of the group can remove the member of the group."}), 404
-    
-    if group_name not in group_names:
-        # if the user trying to remove the member from the group is not the creator of the group
-        print('Only creator can delete')
-        return jsonify({"message": "Only creator of the group can remove the member."}), 404
-
     # Remove the member finally
     result = db.delete_user_from_group_members_table(member_user_id, group_id)
 
@@ -251,21 +240,42 @@ def delete_member_from_group(member_username, group_name):
     
 # ------------ Group expenses endpoints ----------------------
 
+def calculate_expense_split(amount, split_between, custom_shares=None):
+    """
+        Function for calculating the split shares for the members in the split_between list provided.
+        :param amount: Total amount of the expense.
+        :param split_between: List of user_ids to split the expense between.
+        :param custom_shares: Optional dictionary with user_ids as keys and their respective share amounts. If provided, will overrride equal split and use custom shares.
+        :return: Dictionary with user_ids as keys and their calculated share amounts.
+    """
+    expense_shares = {}
+    if custom_shares:
+        # custom split specified
+        expense_shares = custom_shares
+    else:
+        # Equal split
+        share_amount = amount / len(split_between)
+        expense_shares = {user_id: share_amount for user_id in split_between}
+
+    return expense_shares
+
 @jwt_required()
-def add_expense_to_group():
+def add_expense_to_group(custom_shares=None):
     """
         Endpoint to add expense to the group.
     """
     data = request.get_json()
     username = get_jwt_identity()
     user_id_tuple = db.get_user_id_from_username_in_users_table(username)
-    group_name = data.get('group_name')
+    group_id = data.get('group_id')
     expense_name = data.get('expense_name')
     amount = data.get('amount')
+    paid_by = data.get('paid_by')
+    split_between = data.get('split_between')  # List of user_ids to split the expense between
 
-    if not all([group_name, expense_name, amount]):
+    if not all([group_id, expense_name, paid_by, amount, split_between]):
         # If group name is not provided.
-        return jsonify({"message": "Group name, expense_name, amount should be provided to add an expense to the group."}), 400
+        return jsonify({"message": "All fields must be provided to add an expense to the group."}), 400
     
     if not user_id_tuple:
         # If user id is not found.
@@ -273,17 +283,120 @@ def add_expense_to_group():
     
     user_id = user_id_tuple[0]
 
-    # Get the id of the group using group name provided
-    group_id = db.get_group_id_from_group_name_in_group_table(group_name)
+    all_group_ids = db.get_all_group_ids_from_groups_table()
 
-    if not group_id:
+    if group_id not in all_group_ids:
         # if the group where trying to add the member does not exist
-        return jsonify({"message": "Cannot add a new member as this group does not exist."}), 400
+        return jsonify({"message": "Cannot add expense to this group as this group does not exist."}), 400
 
-    # Add new member to the group 
-    result = db.add_expense_to_group_expenses_table(group_id, expense_name, amount, user_id)
+    # Add expense to the group 
+    expense_id = db.add_expense_to_group_expenses_table(group_id, expense_name, amount, user_id)  # This returns the added expense id
 
-    if result:
-        return jsonify({"message": "Expense added successfully!"}), 201
+    if expense_id:
+        # Calculate expense shares between each member
+        expense_shares = calculate_expense_split(amount, split_between, custom_shares)
+
+        # Insert each member's share into the expense shares table
+        for member_id, share_amount in expense_shares.items():
+            direction = "owes" if member_id != paid_by else "is_owed"
+            status = "pending"
+            settled = False
+            settled_date = None
+
+            share_added = db.add_expense_share(
+                expense_id=expense_id,
+                user_id=member_id,
+                share_amount=share_amount,
+                status=status,
+                direction=direction,
+                settled=settled,
+                settled_date=settled_date
+            )
+
+            if not share_added:
+                return jsonify({"message": f"Failed to add share for user_id {member_id}"}), 500
+            
+        return jsonify({"message": "Expense added and split successfully!"}), 201
     else:
         return jsonify({"message": "Failed to add expense."}), 500
+    
+@jwt_required()
+def settle_expense():
+    """
+        Endpoint to settle an expense for a specific user.
+    """
+    data = request.get_json()
+    username = get_jwt_identity()
+    user_id_tuple = db.get_user_id_from_username_in_users_table(username)
+    user_id = user_id_tuple[0] if user_id_tuple else None
+
+    if not user_id:
+        return jsonify({"message": "User not found."}), 404
+
+    expense_id = data.get('expense_id')
+    member_id = data.get('member_id')  # The user with whom the settlement is made
+
+    if not all([expense_id, member_id]):
+        return jsonify({"message": "Both expense_id and member_id are required."}), 400
+
+    # Fetch the specific share details
+    share_details = db.get_share_details_using_expense_id_and_user_id(expense_id, member_id)
+    if not share_details:
+        return jsonify({"message": "Expense share not found for this user."}), 404
+
+    # Update the share details to mark it as settled
+    share_id = share_details['id']
+    settled_date = datetime.now()
+
+    update_result = db.update_expense_share_in_expense_shares_table_using_share_id(
+        share_id=share_id,
+        status="settled",
+        settled=True,
+        settled_date=settled_date
+    )
+
+    if update_result:
+        return jsonify({"message": "Expense settled successfully!"}), 200
+    else:
+        return jsonify({"message": "Failed to settle expense."}), 500
+
+@jwt_required()
+def settle_all_expenses_with_user():
+    """
+        Endpoint to settle all pending expenses with a specific user.
+    """
+    data = request.get_json()
+    username = get_jwt_identity()
+    user_id_tuple = db.get_user_id_from_username_in_users_table(username)
+    user_id = user_id_tuple[0] if user_id_tuple else None
+
+    if not user_id:
+        return jsonify({"message": "User not found."}), 404
+
+    # The user with whom the settlement is being made
+    settle_with_user_id = data.get('settle_with_user_id')
+
+    if not settle_with_user_id:
+        return jsonify({"message": "settle_with_user_id is required."}), 400
+
+    # Retrieve all pending shares between the authenticated user and the specified user
+    pending_shares = db.get_pending_shares_between_users(user_id, settle_with_user_id)
+    
+    if not pending_shares:
+        return jsonify({"message": "No pending shares to settle with this user."}), 404
+
+    # Update each share to mark it as settled
+    settled_date = datetime.now()
+    for share in pending_shares:
+        share_id = share['id']
+        update_result = db.update_expense_share_in_expense_shares_table_using_share_id(
+            share_id=share_id,
+            status="settled",
+            settled=True,
+            settled_date=settled_date
+        )
+        
+        if not update_result:
+            return jsonify({"message": f"Failed to settle share with id {share_id}"}), 500
+
+    return jsonify({"message": "All expenses settled with specified user successfully!"}), 200

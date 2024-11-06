@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { login, logout } from "../../redux/authSlice";
 
+// This custom hook is for automatically logging in the user if the user was logged in before.
 const useAuthCheck = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
