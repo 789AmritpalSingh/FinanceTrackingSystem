@@ -26,13 +26,16 @@ def create_new_group():
     
     user_id = user_id_tuple[0]
 
-    group_id = db.add_new_group_to_groups_table(group_name, user_id)
+    # Create the new group and get the full row details
+    new_group = db.add_new_group_to_groups_table(group_name, user_id)
 
-    # using the group id add the creator of the group to group as well
-    db.add_new_member_to_group_members_table(group_id, user_id)
-
-    if group_id:
-        return jsonify({"message": "Group created successfully!", "group_id": group_id}), 201
+    # Check if the group was created successfully and has details
+    if new_group:
+        # Add the creator as a member of the group
+        db.add_new_member_to_group_members_table(new_group["id"], user_id)
+        
+        # Return the full group details in the response
+        return jsonify({"message": "Group created successfully!", "data": new_group}), 201
     else:
         return jsonify({"message": "Failed to create a group."}), 500
     
@@ -107,14 +110,31 @@ def delete_group(group_id):
         # if the user trying to delete the group is not the creator of the group
         print('Only creator can delete the group')
         return jsonify({"message": "Only creator of the group can delete the group"}), 404
+    
+    # Delete all the expenses and expense shares from the group
+    expenses_deleted = db.delete_group_expenses_by_group_id(group_id)
 
-    # Delete the group finally
-    result = db.delete_group_from_groups_table_using_group_id(group_id)
+    if expenses_deleted:
+        # Only if the expenses were deleted, delete all the group members
+        group_members_removed = db.delete_all_members_from_group_members_table(group_id)
 
-    if result:
-        return jsonify({"message": "Group deleted successfully!"}), 200
+        if group_members_removed:
+            # If groups members were removed from the group successfully
+
+            # Delete the group finally
+            group_deleted = db.delete_group_from_groups_table_using_group_id(group_id)
+
+            if group_deleted:
+                return jsonify({"message": "Group deleted successfully!"}), 200
+            else:
+                return jsonify({"message": "Failed to delete group."}), 500
+
+        else:
+            return jsonify({"message": "Failed to remove members from the group."}), 500  
+        
     else:
-        return jsonify({"message": "Failed to delete group."}), 500
+        return jsonify({"message": "Failed to delete all the expenses and expense shares from the group."}), 500  
+        
     
 # -------------------------- Group members table related endpoints ------------------------
 
@@ -191,11 +211,11 @@ def get_all_group_names_user_is_involved_in():
     if user_id is None:
         return jsonify({"message": "User not found."}), 404
     
-    # Get list of all the groups in which particular user is involved in.
-    group_names = db.get_group_names_for_user(user_id)
+    # Get details of all the groups in which particular user is involved in.
+    groups_details = db.get_groups_details_for_user(user_id)
 
-    if group_names:
-        return jsonify({"data": group_names}), 200
+    if groups_details:
+        return jsonify({"data": groups_details}), 200
     
     else:
         return jsonify({"message": "Cannot find any group for this user.", "data": []}), 500

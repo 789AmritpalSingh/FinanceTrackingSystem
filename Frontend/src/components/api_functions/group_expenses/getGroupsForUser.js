@@ -1,4 +1,4 @@
-export const getGroupNamesForUser = async (token) => {
+export const getGroupsForUser = async (token) => {
     try {
       const response = await fetch(`http://localhost:5000/get_group_names_for_user`, {
         method: "GET",

@@ -441,8 +441,7 @@ def add_new_group_to_groups_table(group_name, creator_user_id):
     if connection is None:
         return False
 
-    cursor = connection.cursor()
-    print(f"Creater user id - {creator_user_id} and group name - {group_name}")
+    cursor = connection.cursor(dictionary=True)
     try:
 
         # groups is a reserved keyword in mysql, so need to use quotes for it.
@@ -451,9 +450,12 @@ def add_new_group_to_groups_table(group_name, creator_user_id):
         cursor.execute(query, params)
         connection.commit()
 
-        # Get the id of newly created group
-        group_id = cursor.lastrowid
-        return group_id
+        # Fetch the full row details of the newly inserted group
+        select_query = "SELECT * FROM `groups` WHERE id = LAST_INSERT_ID()"
+        cursor.execute(select_query)
+        new_group = cursor.fetchone()  # Get the full row details as a dictionary
+
+        return new_group  # Return the row with group_id, group_name, and creator_user_id
 
     except Exception as e:
         print(f"Error during adding a new group details to the groups table - {e}")
@@ -812,9 +814,9 @@ def add_new_member_to_group_members_table(group_id, user_id):
         cursor.close()
         connection.close()
 
-def get_group_names_for_user(user_id):
+def get_groups_details_for_user(user_id):
     """
-    This function fetches all the group names in which a particular user is in using its id from groups table.
+    This function fetches all the group details in which a particular user is in using its id from groups table.
     :param user_id: The id of the user.
     :return: A list of group names the user is a part of.
     """
@@ -826,7 +828,7 @@ def get_group_names_for_user(user_id):
 
     try:
         query = """
-                    SELECT g.group_name
+                    SELECT g.id, g.group_name, g.creator_user_id
                     FROM `groups` g
                     JOIN group_members gm ON g.id = gm.group_id
                     WHERE gm.user_id = %s 
@@ -834,7 +836,7 @@ def get_group_names_for_user(user_id):
         cursor.execute(query, (user_id,))
         group_names = cursor.fetchall()
 
-        return [group_name["group_name"] for group_name in group_names]
+        return group_names
 
     except mysql.connector.Error as e:
         print(f"Error fetching group names for user_id {user_id}: {e}")
@@ -905,6 +907,38 @@ def delete_user_from_group_members_table(user_id, group_id):
     except mysql.connector.Error as e:
         print(
             f"Error deleting user from the group for the user_id {user_id} and group id -  {group_id}: {e}"
+        )
+        return False
+
+    finally:
+        cursor.close()
+        connection.close()
+
+def delete_all_members_from_group_members_table(group_id):
+    """
+    This function is for removing all group members from the group members table using its group id. 
+    This is done when deleting the group basically.
+    :param group_id: Id of the group.
+    :return: True if the group members removed successfully False otherwise
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    DELETE FROM group_members WHERE group_id = %s
+                """
+
+        cursor.execute(query, (group_id,))
+        connection.commit()
+        return cursor.rowcount > 0  # returns true if any of the rows were affected
+
+    except mysql.connector.Error as e:
+        print(
+            f"Error deleting group members from the group with id -  {group_id}: {e}"
         )
         return False
 
@@ -1098,6 +1132,57 @@ def delete_expense_from_group_expenses_table_using_expense_id(expense_id):
     finally:
         cursor.close()
         connection.close()
+
+
+def delete_group_expenses_by_group_id(group_id):
+    """
+        This function deletes all the related group expenses and expenses shares for the group id provided.
+        :param group_id: Id of the group provided.
+        :return: 
+    """
+    try:
+        connection = get_db_connection()
+        if connection is None:
+            return False
+        
+        cursor = connection.cursor()
+
+        # Step 1: Retrieve expense IDs for the given group_id from the group_expenses table
+        select_expenses_query = "SELECT id FROM group_expenses WHERE group_id = %s"
+        cursor.execute(select_expenses_query, (group_id,))
+        expense_ids = cursor.fetchall()
+
+        if expense_ids:
+            # Flatten the list of tuples to a list of expense_ids
+            expense_ids = [row[0] for row in expense_ids]
+
+            # Step 2: Delete rows in expense_shares table based on expense IDs
+            delete_shares_query = "DELETE FROM expense_shares WHERE expense_id IN (%s)"
+            format_strings = ','.join(['%s'] * len(expense_ids))
+            cursor.execute(delete_shares_query % format_strings, tuple(expense_ids))
+
+            # Step 3: Delete rows in group_expenses table for the given group_id
+            delete_group_expenses_query = "DELETE FROM group_expenses WHERE group_id = %s"
+            cursor.execute(delete_group_expenses_query, (group_id,))
+
+            # Commit the changes to the database
+            connection.commit()
+
+            print(f"Deleted all expenses and shares for group_id: {group_id}")
+
+        else:
+            print(f"No expenses found for group_id: {group_id}")
+
+        return True
+
+    except mysql.connector.Error as e:
+        print(f"Error from delete_group_expenses_by_group_id: {e}")
+        return False
+    finally:
+        # Close the database connection
+        cursor.close()
+        connection.close()
+
 
 def add_expense_share(expense_id, user_id, share_amount, status, direction, settled, settled_date):
     """
