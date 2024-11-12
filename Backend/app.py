@@ -44,7 +44,7 @@ app.add_url_rule('/delete_group/<int:group_id>', 'delete_group', delete_group, m
 app.add_url_rule('/add_new_member', 'add_new_member', add_new_member_to_group, methods=['POST'])
 app.add_url_rule('/get_group_members', 'get_group_members', get_all_users_in_the_group, methods=['GET'])
 app.add_url_rule('/get_group_names_for_user', 'get_group_names_for_user', get_all_group_names_user_is_involved_in, methods=['GET'])
-app.add_url_rule('/delete_group_member/<int:member_user_id>/<int:group_id>', 
+app.add_url_rule('/delete_group_member/<int:member_id>/<int:group_id>', 
                  'delete_group_member', delete_member_from_group, methods=['DELETE'])
 
 app.add_url_rule('/add_new_expense_to_group', 'add_new_expense_to_group', add_expense_to_group, methods=['POST'])

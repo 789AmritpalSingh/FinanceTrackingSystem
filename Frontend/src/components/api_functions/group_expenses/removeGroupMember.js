@@ -1,7 +1,7 @@
-export const removeGroupMember = async (token, memberUserId, groupId) => {
+export const removeGroupMember = async (token, memberId, groupId) => {
   try {
     const response = await fetch(
-      `http://localhost:5000/delete_group_member/${memberUserId}/${groupId}`,
+      `http://localhost:5000/delete_group_member/${memberId}/${groupId}`,
       {
         method: "DELETE",
         headers: {

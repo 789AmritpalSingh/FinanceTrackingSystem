@@ -231,10 +231,10 @@ def get_all_group_names_user_is_involved_in():
         return jsonify({"message": "Cannot find any group for this user.", "data": []}), 500
     
 @jwt_required()
-def delete_member_from_group(member_user_id, group_id):
+def delete_member_from_group(member_id, group_id):
     """
         This function is for removing a member from the group. Only creator of the group is authorized to remove the member from the group.
-        :param member_user_id: user ID of the member to remove.
+        :param member_id: ID of the member of the group to remove.
         :param group_id: ID of the group.
     """
     username = get_jwt_identity()
@@ -249,19 +249,11 @@ def delete_member_from_group(member_user_id, group_id):
         # If user is not the creator of the group.
         return jsonify({"message": "You are not allowed to remove the member from the group."}), 404
     
-    if not member_user_id:
+    if not member_id:
         return jsonify({"message": "Member you are trying to delete does not exist"}), 404
-    
-    all_users_id_in_group = db.get_all_user_id_using_group_id_in_group_members_table(group_id)
-    if not all_users_id_in_group:
-        return jsonify({"message": "No member to remove from the group as there is no member in the group"}), 404
-    
-    if member_user_id not in all_users_id_in_group:
-        # If the member to be removed is not the part of this group
-        return jsonify({"message": "This member cannot be removed because of being not a part of this group."}), 404
 
     # Remove the member finally
-    result = db.delete_user_from_group_members_table(member_user_id, group_id)
+    result = db.delete_user_from_group_members_table(member_id, group_id)
 
     if result:
         return jsonify({"message": "Group member deleted successfully!"}), 200

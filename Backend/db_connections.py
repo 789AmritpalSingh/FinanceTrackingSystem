@@ -4,9 +4,9 @@ from werkzeug.security import generate_password_hash
 from datetime import datetime
 
 # Database configuration
-DB_HOST = "localhost"
-DB_USER = "root"
-DB_PASSWORD = "Amrit@2002"
+DB_HOST = "192.168.1.225"
+DB_USER = "SolidWorxServer"
+DB_PASSWORD = "Lucid@390"
 DB_NAME = "financetrackingsystem"
 
 
@@ -895,10 +895,10 @@ def get_all_users_using_group_id_in_group_members_table(group_id):
         connection.close()
 
 
-def delete_user_from_group_members_table(user_id, group_id):
+def delete_user_from_group_members_table(member_id, group_id):
     """
     This function is for removing particular user from the group members table using its id.
-    :param user_id: Id of the user.
+    :param member_id: Id of the member of the group.
     :param group_id: Id of the group.
     :return: True if the user deleted successfully False otherwise
     """
@@ -910,16 +910,16 @@ def delete_user_from_group_members_table(user_id, group_id):
 
     try:
         query = """
-                    DELETE FROM group_members WHERE user_id = %s AND group_id = %s
+                    DELETE FROM group_members WHERE id = %s AND group_id = %s
                 """
 
-        cursor.execute(query, (user_id, group_id))
+        cursor.execute(query, (member_id, group_id))
         connection.commit()
         return cursor.rowcount > 0  # returns true if any of the rows were affected
 
     except mysql.connector.Error as e:
         print(
-            f"Error deleting user from the group for the user_id {user_id} and group id -  {group_id}: {e}"
+            f"Error deleting user from the group for the member_id {member_id} and group id -  {group_id}: {e}"
         )
         return False
 

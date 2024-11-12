@@ -22,6 +22,8 @@ class UserRegistration(Resource):
         if user_details is not None:
             return {"message": "User already exists"}, 400
 
+        # Hash the password before saving to the database
+        hashed_password = generate_password_hash(password)
         db.create_user(email, username, password)
 
         db.update_user_as_logged_in(username)
