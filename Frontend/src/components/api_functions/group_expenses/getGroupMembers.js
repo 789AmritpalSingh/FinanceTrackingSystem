@@ -1,6 +1,6 @@
 export const getGroupMembers = async (token, groupId) => {
     try {
-      const response = await fetch(`http://localhost:5000/get_group_members?group_id=${groupId}`, {
+      const response = await fetch(`http://localhost:5000/get_group_members?group_id=${parseInt(groupId)}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

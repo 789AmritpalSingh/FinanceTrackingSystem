@@ -1,12 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';  // Import the auth slice
 import personalExpensesReducer from './personalExpensesSlice';
-import groupExpensesReducer from './groupExpensesSlice';
+import groupsReducer from './groupsSlice';
+import groupMembersReducer from './groupMembersSlice'
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,  // Add auth slice to the store
     personalExpenses: personalExpensesReducer,
-    groupExpenses: groupExpensesReducer,
+    groups: groupsReducer,
+    groupMembers: groupMembersReducer,
   },
 });

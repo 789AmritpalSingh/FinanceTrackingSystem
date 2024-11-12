@@ -16,7 +16,7 @@ export const addNewMemberToGroup = async (token, groupId, userName) => {
         throw new Error("Failed to add new member");
       }
   
-      return await response.json(); // returns the newly added member id
+      return await response.json(); // returns the newly added member details
     } catch (error) {
       throw new Error(error.message || "Error adding new member");
     }

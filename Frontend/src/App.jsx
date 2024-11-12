@@ -8,7 +8,8 @@ import PersonalExpenses from "./components/personal_expenses/PersonalExpenses";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
-import GroupExpenses from "./components/group_expenses/GroupExpenses";
+import GroupDetails from "./components/group_expenses/GroupDetails";
+import GroupsDisplay from "./components/group_expenses/GroupsDisplay";
 
 const theme = createTheme({
   palette: {
@@ -44,7 +45,15 @@ function App() {
               path="/group_expenses"
               element={
                 <ProtectedRoute>
-                  <GroupExpenses />
+                  <GroupsDisplay />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/group_expenses/:groupId"
+              element={
+                <ProtectedRoute>
+                  <GroupDetails />
                 </ProtectedRoute>
               }
             />

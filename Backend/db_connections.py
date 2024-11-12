@@ -796,16 +796,27 @@ def add_new_member_to_group_members_table(group_id, user_id):
     if connection is None:
         return False
 
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
     try:
 
-        query = "INSERT INTO group_members (group_id, user_id) VALUES (%s, %s)"
+        # Insert the new member into the group_members table
+        insert_query = "INSERT INTO group_members (group_id, user_id) VALUES (%s, %s)"
         params = (group_id, user_id)
-        cursor.execute(query, params)
+        cursor.execute(insert_query, params)
         connection.commit()
-        # Get the id of newly added member to group
-        group_member_id = cursor.lastrowid
-        return group_member_id
+
+        # Fetch the full row details of the newly inserted member
+        select_query = "SELECT * FROM `group_members` WHERE id = LAST_INSERT_ID()"
+        cursor.execute(select_query)
+        new_member_details = cursor.fetchone()  # Fetch as dictionary
+
+        # Retrieve the username of the user added to the group
+        user_id_retrieve_query = "SELECT username FROM users WHERE id = %s"
+        cursor.execute(user_id_retrieve_query, (user_id,))
+        username_result = cursor.fetchone()
+        username = username_result["username"] if username_result else None
+
+        return new_member_details, username  # Return both details and username
 
     except Exception as e:
         print(f"Error during adding a new member to the group_members table - {e}")
@@ -847,34 +858,36 @@ def get_groups_details_for_user(user_id):
         connection.close()
 
 
-def get_all_user_id_using_group_id_in_group_members_table(group_id):
+def get_all_users_using_group_id_in_group_members_table(group_id):
     """
-    This function fetches all the user id from the group members table using group id provided
-    for getting the list of all the users in a groups.
+    This function fetches all the users name from the group members and users table using group id provided
     :param group_id: Id of the group.
-    :return user_id: Id of the user.
+    :return List[users name]: List of all the users in the group.
     """
     connection = get_db_connection()
     if connection is None:
         return False
 
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
     try:
         query = """
-                    SELECT user_id 
+                    SELECT gm.id, u.username, gm.group_id
                     FROM 
-                    group_members 
+                    users u
+                    JOIN group_members gm
+                    ON 
+                    u.id = gm.user_id 
                     WHERE 
-                    group_id = %s
+                    gm.group_id = %s
                 """
 
         cursor.execute(query, (group_id,))
 
-        user_ids = cursor.fetchall()
-        return [user_id[0] for user_id in user_ids]
+        users = cursor.fetchall()
+        return users
 
     except mysql.connector.Error as e:
-        print(f"Error fetching user_id for group id {group_id}: {e}")
+        print(f"Error fetching user for group id {group_id}: {e}")
         return []
 
     finally:

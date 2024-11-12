@@ -16,7 +16,7 @@ export const createGroup = async (token, groupName) => {
         throw new Error("Failed to create group");
       }
   
-      return await response.json(); // It contains the newly created group id
+      return await response.json(); // It contains the newly created group details
     } catch (error) {
       throw new Error(error.message || "Error creating new group");
     }

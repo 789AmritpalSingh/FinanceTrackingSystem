@@ -78,7 +78,6 @@ def update_group_name(group_id):
     
     if creator_user_id != user_id:
         # if the user trying to update the group name is not the creator of the group
-        print('Only creator can update the group name')
         return jsonify({"message": "Only creator of the group can update the group name"}), 404
 
     # Update the group name with the new name
@@ -108,7 +107,6 @@ def delete_group(group_id):
     
     if creator_user_id != user_id:
         # if the user trying to delete the group is not the creator of the group
-        print('Only creator can delete the group')
         return jsonify({"message": "Only creator of the group can delete the group"}), 404
     
     # Delete all the expenses and expense shares from the group
@@ -148,13 +146,19 @@ def add_new_member_to_group():
     user_id_tuple = db.get_user_id_from_username_in_users_table(username)
     group_id = data.get('group_id')
 
+    # Convert group_id to integer for comparison
+    try:
+        group_id = int(group_id)
+    except ValueError:
+        return jsonify({"message": "Invalid group ID format."}), 400
+
     if not group_id:
         # If group name is not provided.
         return jsonify({"message": "Group id should be provided to add a member to the group."}), 400
     
     if not user_id_tuple:
         # If user id is not found.
-        return jsonify({"message": "User id is not found."}), 400
+        return jsonify({"message": "User not found."}), 400
     
     user_id = user_id_tuple[0]
 
@@ -163,12 +167,12 @@ def add_new_member_to_group():
     if group_id not in all_group_ids:
         # if the group where trying to add the member does not exist
         return jsonify({"message": "Cannot add a new member as this group does not exist."}), 400
-
+    
     # Add new member to the group 
-    new_member_id = db.add_new_member_to_group_members_table(group_id, user_id)
+    new_member_details, username = db.add_new_member_to_group_members_table(group_id, user_id)
 
-    if new_member_id:
-        return jsonify({"message": "New member added successfully!", "member_id": new_member_id}), 201
+    if new_member_details:
+        return jsonify({"message": "New member added successfully!", "new_member_details": new_member_details, "username": username}), 201
     else:
         return jsonify({"message": "Failed to add new member."}), 500
     
@@ -181,6 +185,12 @@ def get_all_users_in_the_group():
     if not group_id:
         # If group id is not provided.
         return jsonify({"message": "Group id should be provided to get list of all the members of the group."}), 400
+    
+    # Convert group_id to integer for comparison
+    try:
+        group_id = int(group_id)
+    except ValueError:
+        return jsonify({"message": "Invalid group ID format."}), 400
 
     all_group_ids = db.get_all_group_ids_from_groups_table()
 
@@ -189,13 +199,13 @@ def get_all_users_in_the_group():
         return jsonify({"message": "Cannot get the list of all the members in the group as this group does not exist."}), 400
     
     # Get list of all the users in the group
-    group_members = db.get_all_user_id_using_group_id_in_group_members_table(group_id)
+    group_members = db.get_all_users_using_group_id_in_group_members_table(group_id)
 
     if group_members:
         return jsonify({"data": group_members}), 200
     
     else:
-        return jsonify({"message": "Cannot get any members in this group", "data": []}), 500
+        return jsonify({"message": "Cannot find any members in this group", "data": []}), 500
     
 @jwt_required()
 def get_all_group_names_user_is_involved_in():

@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const groupExpensesSlice = createSlice({
-    name: 'groupExpenses',
+const groupsSlice = createSlice({
+    name: 'groups',
     initialState: {
         groups: [],
         loading: false,
@@ -18,14 +18,15 @@ const groupExpensesSlice = createSlice({
             state.error = null;
         },
         updateGroupNameInStore: (state, action) => {
-            const {groupId, newGroupName} = action.payload
-            const group = state.groups.find((g) => g.id == groupId);
-            if(group){
+            const { groupId, newGroupName } = action.payload
+            const group = state.groups.find((g) => g.id === parseInt(groupId));
+            if (group) {
                 group.group_name = newGroupName;
             }
         },
         removeGroup: (state, action) => {
-            state.groups = state.groups.filter((group) => group.id !== action.payload)
+            const groupId = parseInt(action.payload); // Ensure it's an integer
+            state.groups = state.groups.filter((g) => g.id !== groupId);  // Using !== inside filter allows to retain all groups whose id does not match the groupId to delete
         },
         setLoading: (state, action) => {
             state.loading = action.payload;
@@ -36,5 +37,5 @@ const groupExpensesSlice = createSlice({
     },
 });
 
-export const {setGroups, addGroup, updateGroupNameInStore, removeGroup, setLoading, setError} = groupExpensesSlice.actions;
-export default groupExpensesSlice.reducer;
+export const { setGroups, addGroup, updateGroupNameInStore, removeGroup, setLoading, setError } = groupsSlice.actions;
+export default groupsSlice.reducer;
