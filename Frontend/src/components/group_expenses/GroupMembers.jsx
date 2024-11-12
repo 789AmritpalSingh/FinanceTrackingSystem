@@ -13,6 +13,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Divider,
+  Paper,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useDispatch, useSelector } from "react-redux";
@@ -93,36 +95,55 @@ const GroupMembers = ({ groupId }) => {
 
   return (
     <Box sx={{ marginTop: 4, color: "white" }}>
-      <Typography variant="h6">Group Members</Typography>
-      {loading ? (
-        <Typography variant="body1" sx={{ color: "white" }}>
-          Loading...
-        </Typography>
-      ) : (
-        <List>
-          {members.map((member) => (
-            <ListItem key={member.id}>
-              <ListItemText primary={member.username} />
-              <IconButton color="secondary" onClick={() => handleDeleteMember(member.id)}>
-                <DeleteIcon />
-              </IconButton>
-            </ListItem>
-          ))}
-        </List>
-      )}
-      {memberError && (
-        <Typography variant="body1" sx={{ color: "red" }}>
-          {memberError}
-        </Typography>
-      )}
+      <Typography variant="h6" gutterBottom>
+        Group Members
+      </Typography>
 
-      <Box sx={{ display: "flex", gap: 2, alignItems: "center", marginTop: 2 }}>
+      <Paper elevation={3} sx={{ padding: 2, backgroundColor: "#333", borderRadius: 2 }}>
+        {loading ? (
+          <Typography variant="body1" sx={{ color: "white" }}>
+            Loading...
+          </Typography>
+        ) : (
+          <List>
+            {members.map((member) => (
+              <React.Fragment key={member.id}>
+                <ListItem
+                  secondaryAction={
+                    <IconButton
+                      edge="end"
+                      color="secondary"
+                      onClick={() => handleDeleteMember(member.id)}
+                      aria-label="delete member"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemText primary={member.username} sx={{color: "white"}}/>
+                </ListItem>
+                <Divider sx={{ backgroundColor: "#555" }} />
+              </React.Fragment>
+            ))}
+          </List>
+        )}
+        {memberError && (
+          <Typography variant="body1" sx={{ color: "red", mt: 2 }}>
+            {memberError}
+          </Typography>
+        )}
+      </Paper>
+
+      {/* Add New Member Section */}
+      <Box sx={{ display: "flex", gap: 2, alignItems: "center", marginTop: 3 }}>
         <TextField
           label="Add New Member"
           variant="outlined"
           value={newMemberUsername}
           onChange={(e) => setNewMemberUsername(e.target.value)}
-          sx={{ color: "white" }}
+          sx={{ flexGrow: 1, backgroundColor: "#444", color: "white", borderRadius: 1 }}
+          InputLabelProps={{ style: { color: "#ccc" } }}
+          InputProps={{ style: { color: "white" } }}
         />
         <Button variant="contained" color="primary" onClick={handleAddNewMember}>
           Add Member
@@ -133,7 +154,9 @@ const GroupMembers = ({ groupId }) => {
       <Dialog open={deleteMemberConfirmOpen} onClose={() => setDeleteMemberConfirmOpen(false)}>
         <DialogTitle>Confirm Member Deletion</DialogTitle>
         <DialogContent>
-          <DialogContentText>Are you sure you want to remove this member from the group?</DialogContentText>
+          <DialogContentText>
+            Are you sure you want to remove this member from the group?
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteMemberConfirmOpen(false)} color="primary">
