@@ -871,7 +871,7 @@ def get_all_users_using_group_id_in_group_members_table(group_id):
     cursor = connection.cursor(dictionary=True)
     try:
         query = """
-                    SELECT gm.id, u.username, gm.group_id
+                    SELECT gm.id, u.username, gm.group_id, gm.user_id
                     FROM 
                     users u
                     JOIN group_members gm
@@ -1013,8 +1013,8 @@ def get_all_expenses_details_for_a_particular_group_from_group_expenses_table(gr
 
     try:
         cursor.execute(query, (group_id,))
-        user_id = cursor.fetchall()
-        return user_id
+        group_expenses = cursor.fetchall()
+        return group_expenses
 
     except mysql.connector.Error as e:
         print(

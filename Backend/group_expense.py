@@ -295,6 +295,8 @@ def add_expense_to_group(custom_shares=None):
     paid_by = data.get('paid_by')
     split_between = data.get('split_between')  # List of user_ids to split the expense between
 
+    print(f'Split between - {split_between}, paid by - {paid_by}')
+
     if not all([group_id, expense_name, paid_by, amount, split_between]):
         # If group name is not provided.
         return jsonify({"message": "All fields must be provided to add an expense to the group."}), 400
@@ -312,7 +314,7 @@ def add_expense_to_group(custom_shares=None):
         return jsonify({"message": "Cannot add expense to this group as this group does not exist."}), 400
 
     # Add expense to the group 
-    expense_id = db.add_expense_to_group_expenses_table(group_id, expense_name, amount, user_id)  # This returns the added expense id
+    expense_id = db.add_expense_to_group_expenses_table(group_id, expense_name, amount, paid_by)  # This returns the added expense id
 
     if expense_id:
         # Calculate expense shares between each member
@@ -321,6 +323,7 @@ def add_expense_to_group(custom_shares=None):
         # Insert each member's share into the expense shares table
         for member_id, share_amount in expense_shares.items():
             direction = "owes" if member_id != paid_by else "is_owed"
+            share_amount = share_amount if member_id != paid_by else (amount - share_amount) 
             status = "pending"
             settled = False
             settled_date = None
@@ -422,3 +425,35 @@ def settle_all_expenses_with_user():
             return jsonify({"message": f"Failed to settle share with id {share_id}"}), 500
 
     return jsonify({"message": "All expenses settled with specified user successfully!"}), 200
+
+
+@jwt_required()
+def get_all_expenses_in_the_group():
+    """
+        Endpoint to retreive all the expenses in a group.
+    """
+    group_id = request.args.get('group_id')
+    if not group_id:
+        # If group id is not provided.
+        return jsonify({"message": "Group id should be provided to get list of all the expenses of the group."}), 400
+    
+    # Convert group_id to integer for comparison
+    try:
+        group_id = int(group_id)
+    except ValueError:
+        return jsonify({"message": "Invalid group ID format."}), 400
+
+    all_group_ids = db.get_all_group_ids_from_groups_table()
+
+    if group_id not in all_group_ids:
+        # if the group where trying to add the member does not exist
+        return jsonify({"message": "Cannot get the list of all the expenses in the group as this group does not exist."}), 400
+    
+    # Get list of all the expenses in the group
+    group_expenses = db.get_all_expenses_details_for_a_particular_group_from_group_expenses_table(group_id)
+
+    if group_expenses:
+        return jsonify({"data": group_expenses}), 200
+    
+    else:
+        return jsonify({"message": "Cannot find any expenses in this group", "data": []}), 500

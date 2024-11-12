@@ -21,6 +21,11 @@ const groupMembersSlice = createSlice({
             const groupMemberId = action.payload;
             state.members = state.members.filter((m) => m.id !== groupMemberId);
         },
+        clearGroupMembersState: (state) => {
+            state.members = [];
+            state.loading = false;
+            state.error = null;
+        },
         setLoading: (state, action) => {
             state.loading = action.payload;
         },
@@ -30,5 +35,5 @@ const groupMembersSlice = createSlice({
     },
 });
 
-export const { setGroupMembers, addGroupMember, removeGroupMemberFromStore, setLoading, setMemberError } = groupMembersSlice.actions;
+export const { setGroupMembers, addGroupMember, removeGroupMemberFromStore, clearGroupMembersState, setLoading, setMemberError } = groupMembersSlice.actions;
 export default groupMembersSlice.reducer;

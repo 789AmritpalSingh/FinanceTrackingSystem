@@ -28,6 +28,11 @@ const groupsSlice = createSlice({
             const groupId = parseInt(action.payload); // Ensure it's an integer
             state.groups = state.groups.filter((g) => g.id !== groupId);  // Using !== inside filter allows to retain all groups whose id does not match the groupId to delete
         },
+        clearGroupState: (state) => {
+            state.groups = [];
+            state.loading = false;
+            state.error = null;
+        },
         setLoading: (state, action) => {
             state.loading = action.payload;
         },
@@ -37,5 +42,5 @@ const groupsSlice = createSlice({
     },
 });
 
-export const { setGroups, addGroup, updateGroupNameInStore, removeGroup, setLoading, setError } = groupsSlice.actions;
+export const { setGroups, addGroup, updateGroupNameInStore, removeGroup, clearGroupState, setLoading, setError } = groupsSlice.actions;
 export default groupsSlice.reducer;

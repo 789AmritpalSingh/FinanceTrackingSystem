@@ -27,6 +27,11 @@ const personalExpensesSlice = createSlice({
     deleteExpense: (state, action) => {
       state.expenses = state.expenses.filter(expense => expense.id !== action.payload);  // Remove expense by ID
     },
+    clearPersonalExpensesState: (state) => {
+      state.expenses = [];
+      state.loading = false;
+      state.error = null;
+    },
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
@@ -36,6 +41,6 @@ const personalExpensesSlice = createSlice({
   },
 });
 
-export const { setExpenses, addExpense, updateExpense, deleteExpense, setLoading, setError } = personalExpensesSlice.actions;
+export const { setExpenses, addExpense, updateExpense, deleteExpense, clearPersonalExpensesState, setLoading, setError } = personalExpensesSlice.actions;
 
 export default personalExpensesSlice.reducer;

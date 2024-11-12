@@ -15,6 +15,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../redux/authSlice";
 import MenuIcon from "@mui/icons-material/Menu"; // For mobile menu icon
+import { clearPersonalExpensesState } from "../../redux/personalExpensesSlice";
+import { clearGroupState } from "../../redux/groupsSlice";
+import { clearGroupMembersState } from "../../redux/groupMembersSlice";
+import { clearGroupExpensesState } from "../../redux/groupExpensesSlice";
 
 const NavBar = () => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -42,6 +46,11 @@ const NavBar = () => {
       if (response.ok) {
         localStorage.removeItem("token");
         dispatch(logout());
+        // clear all the redux state on the log out.
+        dispatch(clearPersonalExpensesState())
+        dispatch(clearGroupState())
+        dispatch(clearGroupMembersState())
+        dispatch(clearGroupExpensesState());
         navigate("/login");
       } else {
         console.error("Failed to log out");

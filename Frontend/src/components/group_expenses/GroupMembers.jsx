@@ -28,6 +28,7 @@ import {
 import { getGroupMembers } from "../api_functions/group_expenses/getGroupMembers";
 import { addNewMemberToGroup } from "../api_functions/group_expenses/addNewMemberToGroup";
 import { removeGroupMember } from "../api_functions/group_expenses/removeGroupMember";
+import GroupExpenses from "./GroupExpenses";
 
 const GroupMembers = ({ groupId }) => {
   const dispatch = useDispatch();
@@ -68,6 +69,7 @@ const GroupMembers = ({ groupId }) => {
       const newMember = await addNewMemberToGroup(token, groupId, newMemberUsername);
       dispatch(addGroupMember({
         id: newMember.new_member_details.id,
+        user_id: newMember.new_member_details.user_id,
         username: newMember.username,
         group_id: parseInt(groupId),
       }));
@@ -149,6 +151,9 @@ const GroupMembers = ({ groupId }) => {
           Add Member
         </Button>
       </Box>
+
+      {/* Render Group Expenses */}
+      <GroupExpenses groupId={groupId}/>
 
       {/* Confirmation Dialog for Deleting Group Member */}
       <Dialog open={deleteMemberConfirmOpen} onClose={() => setDeleteMemberConfirmOpen(false)}>
