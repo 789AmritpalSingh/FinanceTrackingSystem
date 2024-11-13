@@ -24,7 +24,7 @@ class UserRegistration(Resource):
 
         # Hash the password before saving to the database
         hashed_password = generate_password_hash(password)
-        db.create_user(email, username, password)
+        db.create_user(email, username, hashed_password)
 
         db.update_user_as_logged_in(username)
         # Automatically generate a JWT token for the new user

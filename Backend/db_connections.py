@@ -4,9 +4,9 @@ from werkzeug.security import generate_password_hash
 from datetime import datetime
 
 # Database configuration
-DB_HOST = "192.168.1.225"
-DB_USER = "SolidWorxServer"
-DB_PASSWORD = "Lucid@390"
+DB_HOST = "localhost"
+DB_USER = "root"
+DB_PASSWORD = "Amrit@2002"
 DB_NAME = "financetrackingsystem"
 
 
