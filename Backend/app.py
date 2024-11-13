@@ -6,7 +6,7 @@ from user_authentication import UserRegistration, UserLogin, ProtectedResource, 
 from personal_expenses import add_individual_expense, get_user_expenses, delete_user_expenses, update_user_expense
 from group_expense import create_new_group, get_name_of_creator_of_the_group, update_group_name, delete_group, \
 add_new_member_to_group, get_all_users_in_the_group, delete_member_from_group, add_expense_to_group, settle_expense, \
-settle_all_expenses_with_user, get_all_group_names_user_is_involved_in, get_all_expenses_in_the_group
+settle_all_expenses_with_user, get_all_group_names_user_is_involved_in, get_all_expenses_in_the_group, get_user_balances
 from config import JWT_SECRET_KEY
 
 app = Flask(__name__)
@@ -53,6 +53,8 @@ app.add_url_rule('/add_new_expense_to_group', 'add_new_expense_to_group', add_ex
 app.add_url_rule('/settle_expense', 'settle_expense', settle_expense, methods=['POST'])
 app.add_url_rule('/settle_all_expenses_with_user', 'settle_all_expenses_with_user', settle_all_expenses_with_user, methods=['POST'])
 app.add_url_rule('/get_group_expenses', 'get_group_expenses', get_all_expenses_in_the_group, methods=['GET'])
+
+app.add_url_rule('/get_user_balances', 'get_user_balances', get_user_balances, methods=['GET'])
 
 if __name__ == '__main__':
     app.run(debug=True)

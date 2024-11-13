@@ -23,6 +23,8 @@ import {
   setLoading,
 } from "../../redux/groupExpensesSlice";
 import { getGroupExpenses } from "../api_functions/group_expenses/getGroupExpenses";
+import { setGroupBalances, setGroupBalancesError, setGroupBalancesLoading } from "../../redux/groupBalancesSlice";
+import { getGroupBalances } from "../api_functions/group_expenses/getGroupBalances";
 
 const GroupExpenses = ({ groupId }) => {
   const dispatch = useDispatch();
@@ -30,6 +32,7 @@ const GroupExpenses = ({ groupId }) => {
     (state) => state.groupExpenses
   );
   const members = useSelector((state) => state.groupMembers.members);
+  const { balances, balancesLoading, balancesError } = useSelector((state) => state.groupBalances);
 
   // State for managing the add expense modal and input fields
   const [addExpenseModalOpen, setAddExpenseModalOpen] = useState(false);
@@ -43,21 +46,29 @@ const GroupExpenses = ({ groupId }) => {
   const handleAddExpenseModalOpen = () => setAddExpenseModalOpen(true);
   const handleAddExpenseModalClose = () => setAddExpenseModalOpen(false);
 
-  // Fetch expenses on mount
+  // Fetch expenses and balances on mount
   useEffect(() => {
-    dispatch(setLoading(true));
     const token = localStorage.getItem("token");
-    const fetchExpenses = async () => {
+
+    const fetchExpensesAndBalances = async () => {
+      dispatch(setLoading(true));
+      dispatch(setGroupBalancesLoading(true));
       try {
         const expensesList = await getGroupExpenses(token, groupId);
         dispatch(setGroupExpense(expensesList));
-      } catch (error) {
-        dispatch(setGroupExpenseError(error.message));
+
+        const balancesList = await getGroupBalances(token, groupId); // Fetch balances
+        dispatch(setGroupBalances(balancesList));
+      } catch (err) {
+        dispatch(setGroupExpenseError(err.message));
+        dispatch(setGroupBalancesError(err.message));
       } finally {
         dispatch(setLoading(false));
+        dispatch(setGroupBalancesLoading(false));
       }
     };
-    fetchExpenses();
+
+    fetchExpensesAndBalances();
   }, [groupId, dispatch]);
 
   // Handle form submission to add a new expense
@@ -94,7 +105,66 @@ const GroupExpenses = ({ groupId }) => {
 
   return (
     <Box sx={{ padding: 4 }}>
-      <Typography variant="h6" gutterBottom sx={{ color: "#00e676", fontWeight: "bold" }}>
+
+      {/* Display Balances */}
+      <Typography
+        variant="h6"
+        gutterBottom
+        sx={{ color: "#00e676", fontWeight: "bold", marginTop: 4 }}
+      >
+        Balances
+      </Typography>
+      {balancesLoading ? (
+        <CircularProgress sx={{ display: "block", margin: "20px auto" }} />
+      ) : (
+        <Paper
+          elevation={3}
+          sx={{
+            padding: 2,
+            marginTop: 2,
+            backgroundColor: "#333",
+            borderRadius: 2,
+          }}
+        >
+          <List>
+            {balances.length > 0 ? (
+              balances.map((balance) => {
+                const member = members.find(
+                  (m) => m.user_id === balance.other_user_id
+                );
+                const username = member?.username || "Unknown";
+                const absoluteBalance = Math.abs(balance.balance);
+
+                return (
+                  <ListItem key={balance.other_user_id}>
+                    <ListItemText
+                      primary={`${username}: $${absoluteBalance}`}
+                      secondary={
+                        balance.balance > 0
+                          ? `You are owed $${absoluteBalance} by ${username}`
+                          : `You owe $${absoluteBalance} to ${username}`
+                      }
+                      sx={{ color: "white" }}
+                      secondaryTypographyProps={{
+                        style: { color: "#b0b0b0" },
+                      }}
+                    />
+                  </ListItem>
+                );
+              })) : (
+              <Typography
+                variant="body1"
+                color="white"
+                sx={{ textAlign: "center", padding: 2 }}
+              >
+                No balances to display.
+              </Typography>
+            )}
+          </List>
+        </Paper>
+      )}
+
+      <Typography variant="h6" gutterBottom sx={{ color: "#00e676", fontWeight: "bold", marginTop: 5 }}>
         Expenses
       </Typography>
 
@@ -119,10 +189,9 @@ const GroupExpenses = ({ groupId }) => {
                   <ListItem>
                     <ListItemText
                       primary={expense.expense_name}
-                      secondary={`Amount: $${expense.amount} - Paid by: ${
-                        members.find((m) => m.user_id === expense.paid_by)
-                          ?.username || "Unknown"
-                      }`}
+                      secondary={`Amount: $${expense.amount} - Paid by: ${members.find((m) => m.user_id === expense.paid_by)
+                        ?.username || "Unknown"
+                        }`}
                       sx={{ color: "white" }}
                       secondaryTypographyProps={{
                         style: { color: "#b0b0b0" }, // Light gray color for secondary text
@@ -138,7 +207,7 @@ const GroupExpenses = ({ groupId }) => {
                 color="white"
                 sx={{ textAlign: "center", padding: 2 }}
               >
-                No expenses found for this group.
+                No expenses to display for this group.
               </Typography>
             )}
           </List>

@@ -4,9 +4,9 @@ from werkzeug.security import generate_password_hash
 from datetime import datetime
 
 # Database configuration
-DB_HOST = "localhost"
-DB_USER = "root"
-DB_PASSWORD = "Amrit@2002"
+DB_HOST = "192.168.1.225"
+DB_USER = "SolidWorxServer"
+DB_PASSWORD = "Lucid@390"
 DB_NAME = "financetrackingsystem"
 
 
@@ -1499,6 +1499,91 @@ def delete_expense_share_from_expense_shares_table_using_share_id(share_id):
         print(f"Error deleting expense share with id {share_id}: {e}")
         connection.rollback()
         return False
+    finally:
+        cursor.close()
+        connection.close()
+
+# ---------------------- User balances -----------------------------
+
+def update_user_balances(group_id, paid_by, expense_shares):
+    """
+        Update the user_balances table based on the expense shares.
+        :param group_id: The ID of the group where the expense is added.
+        :param paid_by: The user ID of the person who paid for the expense.
+        :param expense_shares: Dictionary of user_id -> share_amount.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    print(f'Expense shares - {expense_shares}')
+    try:
+        for user_id, share_amount in expense_shares.items():
+            # Skip self-balance updates
+            if user_id == paid_by:
+                continue
+
+            # Calculate the balance change
+            balance_change = share_amount
+
+            print(f'User id - {user_id} and balance - {balance_change}')
+
+            # Update or insert balance between paid_by(user_id) and user_id(other_user_id)
+            query = """
+                        INSERT INTO user_balances (user_id, other_user_id, group_id, balance)
+                        VALUES (%s, %s, %s, %s)
+                        ON DUPLICATE KEY UPDATE balance = balance + VALUES(balance)
+                    """
+            params = (paid_by, user_id, group_id, balance_change)
+            print(f'Params - {params}')
+            cursor.execute(query, params)
+
+            # Update the reverse balance (for user_id's perspective)
+            reverse_params = (user_id, paid_by, group_id, -balance_change)
+            print(f'Reverse params - {reverse_params}')
+            cursor.execute(query, reverse_params)
+
+        connection.commit()
+        # Fetch the last row inserted/updated
+        cursor.execute("SELECT * FROM user_balances where id = LAST_INSERT_ID()")
+        last_row = cursor.fetchone()
+
+    except Exception as e:
+        print(f"Error updating user balances: {e}")
+        return False
+
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_user_balances_from_user_balances_table(user_id, group_id):
+    """
+        This function retrieves user balance details from the user_balances table.
+
+        :param user_id: ID of the user for which fetching the balance detail.
+        :param group_id: ID of the group from where fetching the balance.
+        :return: other_user_id and balance
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return None
+
+    cursor = connection.cursor(dictionary=True)
+    try:
+        query = """
+                    SELECT * FROM user_balances
+                    WHERE user_id = %s AND group_id = %s
+                """
+        cursor.execute(query, (user_id, group_id))
+        user_balance_details = cursor.fetchall()
+        return user_balance_details
+
+    except mysql.connector.Error as e:
+        print(
+            f"Error fetching user balance details for user id {user_id} and group id {group_id}: {e}"
+        )
+        return None
     finally:
         cursor.close()
         connection.close()

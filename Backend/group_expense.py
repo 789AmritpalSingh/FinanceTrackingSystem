@@ -320,6 +320,12 @@ def add_expense_to_group(custom_shares=None):
         # Calculate expense shares between each member
         expense_shares = calculate_expense_split(amount, split_between, custom_shares)
 
+        # Update the user balances table with the new balance
+        updated_user_balances = db.update_user_balances(group_id, paid_by, expense_shares)
+
+        if not updated_user_balances:
+            return jsonify({"message": "Failed to update the user balances"}), 500
+
         # Insert each member's share into the expense shares table
         for member_id, share_amount in expense_shares.items():
             direction = "owes" if member_id != paid_by else "is_owed"
@@ -344,6 +350,48 @@ def add_expense_to_group(custom_shares=None):
         return jsonify({"message": "Expense added and split successfully!"}), 201
     else:
         return jsonify({"message": "Failed to add expense."}), 500
+
+@jwt_required()
+def get_user_balances():
+    """
+        Endpoint to retreive the balances of the users in a group.
+    """
+    username = get_jwt_identity()
+
+    # Retrieve user ID from the database using the username
+    user_id_tuple_result = db.get_user_id_from_username_in_users_table(username)
+    user_id = user_id_tuple_result[0] if user_id_tuple_result else None
+
+    if user_id is None:
+        return jsonify({"message": "User not found."}), 404
+
+    group_id = request.args.get('group_id')
+    
+    if not group_id:
+        # If group id is not provided.
+        return jsonify({"message": "Group id should be provided to get list of all the balances in this group."}), 400
+    
+    # Convert group_id to integer for comparison
+    try:
+        group_id = int(group_id)
+    except ValueError:
+        return jsonify({"message": "Invalid group ID format."}), 400
+
+
+    all_group_ids = db.get_all_group_ids_from_groups_table()
+
+    if group_id not in all_group_ids:
+        # if the group where trying to add the member does not exist
+        return jsonify({"message": "Cannot get the list of all the balances in the group as this group does not exist."}), 400
+    
+    # Get list of all the balances in the group for particular user
+    user_balances = db.get_user_balances_from_user_balances_table(user_id, group_id)
+
+    if user_balances:
+        return jsonify({"balances": user_balances}), 200
+    
+    else:
+        return jsonify({"message": "Cannot find any balance in this group", "balances": []}), 500
     
 @jwt_required()
 def settle_expense():

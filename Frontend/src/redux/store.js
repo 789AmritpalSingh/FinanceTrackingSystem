@@ -4,6 +4,7 @@ import personalExpensesReducer from './personalExpensesSlice';
 import groupsReducer from './groupsSlice';
 import groupMembersReducer from './groupMembersSlice'
 import groupExpensesReducer from './groupExpensesSlice'
+import groupBalancesReducer from './groupBalancesSlice'
 
 export const store = configureStore({
   reducer: {
@@ -12,5 +13,6 @@ export const store = configureStore({
     groups: groupsReducer,
     groupMembers: groupMembersReducer,
     groupExpenses: groupExpensesReducer,
+    groupBalances: groupBalancesReducer,
   },
 });
