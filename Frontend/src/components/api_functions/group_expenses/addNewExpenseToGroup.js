@@ -17,7 +17,7 @@ export const addNewExpenseToGroup = async (token, newExpenseData) => {
       }
   
       const data = await response.json()
-      return data.message; 
+      return data; 
     } catch (error) {
       throw new Error(error.message || "Error adding expense");
     }

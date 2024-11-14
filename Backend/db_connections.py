@@ -4,9 +4,9 @@ from werkzeug.security import generate_password_hash
 from datetime import datetime
 
 # Database configuration
-DB_HOST = "192.168.1.225"
-DB_USER = "SolidWorxServer"
-DB_PASSWORD = "Lucid@390"
+DB_HOST = "localhost"
+DB_USER = "root"
+DB_PASSWORD = "Amrit@2002"
 DB_NAME = "financetrackingsystem"
 
 
@@ -978,16 +978,18 @@ def add_expense_to_group_expenses_table(group_id, expense_name, amount, paid_by)
     if connection is None:
         return False
 
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
     try:
 
         query = "INSERT INTO group_expenses (group_id, expense_name, amount, paid_by, date) VALUES (%s, %s, %s, %s, %s)"
         params = (group_id, expense_name, amount, paid_by, datetime.now())
         cursor.execute(query, params)
-        # Get the auto-incremented expense_id of the inserted row
-        expense_id = cursor.lastrowid
         connection.commit()
-        return expense_id
+
+        # Fetch the last inserted row details
+        cursor.execute("SELECT * FROM group_expenses WHERE id = LAST_INSERT_ID()")
+        last_expense_details = cursor.fetchone()  # Fetch the single result
+        return last_expense_details
 
     except Exception as e:
         print(f"Error during adding a new expense to the group_expenses table - {e}")
@@ -1545,9 +1547,7 @@ def update_user_balances(group_id, paid_by, expense_shares):
             cursor.execute(query, reverse_params)
 
         connection.commit()
-        # Fetch the last row inserted/updated
-        cursor.execute("SELECT * FROM user_balances where id = LAST_INSERT_ID()")
-        last_row = cursor.fetchone()
+        return True
 
     except Exception as e:
         print(f"Error updating user balances: {e}")

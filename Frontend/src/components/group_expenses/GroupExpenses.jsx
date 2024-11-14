@@ -18,6 +18,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { addNewExpenseToGroup } from "../api_functions/group_expenses/addNewExpenseToGroup";
 import {
+  addGroupExpense,
   setGroupExpense,
   setGroupExpenseError,
   setLoading,
@@ -89,8 +90,9 @@ const GroupExpenses = ({ groupId }) => {
     const token = localStorage.getItem("token");
 
     try {
-      const message = await addNewExpenseToGroup(token, newExpenseData);
-      alert(message); // Notify user on success
+      const data = await addNewExpenseToGroup(token, newExpenseData);
+      dispatch(addGroupExpense(data.expense_details))
+      alert(data.message); // Notify user on success
       handleAddExpenseModalClose(); // Close modal on success
       setSnackbarOpen(true); // Open feedback snackbar
       // Reset fields
@@ -102,6 +104,12 @@ const GroupExpenses = ({ groupId }) => {
       dispatch(setGroupExpenseError(error.message));
     }
   };
+
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Intl.DateTimeFormat('en-US', options).format(new Date(dateString));
+  };
+  
 
   return (
     <Box sx={{ padding: 4 }}>
@@ -185,13 +193,12 @@ const GroupExpenses = ({ groupId }) => {
           <List>
             {expenses.length > 0 ? (
               expenses.map((expense) => (
-                <React.Fragment key={expense.id}>
+                <React.Fragment key={expense?.id}>
                   <ListItem>
                     <ListItemText
-                      primary={expense.expense_name}
-                      secondary={`Amount: $${expense.amount} - Paid by: ${members.find((m) => m.user_id === expense.paid_by)
-                        ?.username || "Unknown"
-                        }`}
+                      primary={expense?.expense_name}
+                      secondary={`Amount: $${expense?.amount} - Paid by: ${members.find((m) => m.user_id === expense?.paid_by)
+                        ?.username || "Unknown"} - Date: ${formatDate(expense?.date)}`}
                       sx={{ color: "white" }}
                       secondaryTypographyProps={{
                         style: { color: "#b0b0b0" }, // Light gray color for secondary text

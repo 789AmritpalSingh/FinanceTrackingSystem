@@ -314,9 +314,9 @@ def add_expense_to_group(custom_shares=None):
         return jsonify({"message": "Cannot add expense to this group as this group does not exist."}), 400
 
     # Add expense to the group 
-    expense_id = db.add_expense_to_group_expenses_table(group_id, expense_name, amount, paid_by)  # This returns the added expense id
+    expense_details = db.add_expense_to_group_expenses_table(group_id, expense_name, amount, paid_by)  # This returns the added expense id
 
-    if expense_id:
+    if expense_details:
         # Calculate expense shares between each member
         expense_shares = calculate_expense_split(amount, split_between, custom_shares)
 
@@ -335,7 +335,7 @@ def add_expense_to_group(custom_shares=None):
             settled_date = None
 
             share_added = db.add_expense_share(
-                expense_id=expense_id,
+                expense_id=expense_details["id"],
                 user_id=member_id,
                 share_amount=share_amount,
                 status=status,
@@ -345,9 +345,9 @@ def add_expense_to_group(custom_shares=None):
             )
 
             if not share_added:
-                return jsonify({"message": f"Failed to add share for user_id {member_id}"}), 500
+                return jsonify({"message": f"Failed to add share for user_id {member_id}", "expense_details": []}), 500
             
-        return jsonify({"message": "Expense added and split successfully!"}), 201
+        return jsonify({"message": "Expense added and split successfully!", "expense_details": expense_details}), 201
     else:
         return jsonify({"message": "Failed to add expense."}), 500
 
