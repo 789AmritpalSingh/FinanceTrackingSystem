@@ -12,6 +12,10 @@ import {
   DialogContentText,
   DialogActions,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -32,6 +36,7 @@ import { removeGroupMember } from "../api_functions/group_expenses/removeGroupMe
 import { clearGroupMembersState } from "../../redux/groupMembersSlice";
 import { clearGroupExpensesState } from "../../redux/groupExpensesSlice";
 import { clearGroupBalancesState } from "../../redux/groupBalancesSlice";
+import { changeGroupCreator } from "../api_functions/group_expenses/changeGroupCreator";
 
 const GroupDetails = () => {
   const { groupId } = useParams();
@@ -48,7 +53,6 @@ const GroupDetails = () => {
   const loggedInUserMemberId = members.find(
     (m) => m.user_id === loggedInUserId
   )?.id;
-  console.log("Logged in user member id ", loggedInUserMemberId);
 
   const loading = useSelector((state) => state.groups.loading); // Check if groups are loading
 
@@ -56,6 +60,8 @@ const GroupDetails = () => {
   const [newGroupName, setNewGroupName] = useState(group?.group_name || "");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [leaveGroupConfirmOpen, setLeaveGroupConfirmOpen] = useState(false);
+  const [selectNewCreatorOpen, setSelectNewCreatorOpen] = useState(false);
+  const [newCreatorId, setNewCreatorId] = useState("");
 
   // Fetch groups on if redux state is empty i.e. there are no groups
   useEffect(() => {
@@ -110,22 +116,61 @@ const GroupDetails = () => {
     }
   };
 
-  const handleLeaveGroup = async () => {
+  const handleLeaveGroup = async (isCreatorChanged = false) => {
+
     try {
-      const token = localStorage.getItem("token");
-      await removeGroupMember(token, loggedInUserMemberId, groupId);
-      // Remove the group from Redux store
-      dispatch(removeGroup(groupId));
-      // Clear the expenses, balances and group members from the redux store of the left group
-      dispatch(clearGroupBalancesState());
-      dispatch(clearGroupExpensesState());
-      dispatch(clearGroupMembersState());
-      // Navigate to the group expenses page
-      navigate("/group_expenses");
+      if (loggedInUserId === creatorUserId && !isCreatorChanged) {
+        if (members.length === 1) {
+          handleDeleteGroup(); // Delete the group if the creator is the only one member left.
+        } else {
+          setSelectNewCreatorOpen(true); // Prompt to select a new creator.
+          return;
+        }
+      } else {
+        const token = localStorage.getItem("token");
+        await removeGroupMember(token, loggedInUserMemberId, groupId);
+        // Remove the group from Redux store
+        dispatch(removeGroup(groupId));
+        // Clear the expenses, balances, and group members from the Redux store of the left group
+        dispatch(clearGroupBalancesState());
+        dispatch(clearGroupExpensesState());
+        dispatch(clearGroupMembersState());
+        // Navigate to the group expenses page
+        navigate("/group_expenses");
+      }
     } catch (error) {
       dispatch(setError(error.message));
     } finally {
       setLeaveGroupConfirmOpen(false);
+    }
+  };
+
+  const handleChangeCreator = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await changeGroupCreator(token, groupId, newCreatorId);
+
+      // Update the group in Redux
+      dispatch(
+        updateGroupNameInStore({
+          groupId,
+          newCreatorUserId: newCreatorId,
+        })
+      );
+
+      // Close the modal on success
+      setSelectNewCreatorOpen(false);
+
+      // Optionally notify the user about the successful update
+      // alert("Group creator changed successfully.");
+
+      // Leave the group after changing the creator
+      await handleLeaveGroup(true); // Pass a flag to avoid re-prompting
+    } catch (error) {
+      dispatch(setError(error.message));
+
+      // Optionally notify the user about the error
+      alert("Failed to change the group creator. Please try again.");
     }
   };
 
@@ -270,8 +315,44 @@ const GroupDetails = () => {
           >
             Cancel
           </Button>
-          <Button onClick={handleLeaveGroup} color="error">
+          <Button onClick={() => handleLeaveGroup(false)} color="error">
             Leave Group
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialogue for changing the group creator */}
+      <Dialog
+        open={selectNewCreatorOpen}
+        onClose={() => setSelectNewCreatorOpen(false)}
+      >
+        <DialogTitle>Select New Group Creator</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth>
+            <InputLabel>Select Member</InputLabel>
+            <Select
+              value={newCreatorId}
+              onChange={(e) => setNewCreatorId(e.target.value)}
+            >
+              {members
+                .filter((m) => m.user_id !== loggedInUserId)
+                .map((member) => (
+                  <MenuItem key={member.user_id} value={member.user_id}>
+                    {member.username}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setSelectNewCreatorOpen(false)}
+            color="primary"
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleChangeCreator} color="primary">
+            Change Creator
           </Button>
         </DialogActions>
       </Dialog>

@@ -18,12 +18,18 @@ const groupsSlice = createSlice({
             state.error = null;
         },
         updateGroupNameInStore: (state, action) => {
-            const { groupId, newGroupName } = action.payload
+            const { groupId, newGroupName, newCreatorUserId } = action.payload;
             const group = state.groups.find((g) => g.id === parseInt(groupId));
             if (group) {
+              if (newGroupName) {
                 group.group_name = newGroupName;
+              }
+              if (newCreatorUserId) {
+                group.creator_user_id = newCreatorUserId; // Update the creator ID
+              }
             }
-        },
+          },
+          
         removeGroup: (state, action) => {
             const groupId = parseInt(action.payload); // Ensure it's an integer
             state.groups = state.groups.filter((g) => g.id !== groupId);  // Using !== inside filter allows to retain all groups whose id does not match the groupId to delete

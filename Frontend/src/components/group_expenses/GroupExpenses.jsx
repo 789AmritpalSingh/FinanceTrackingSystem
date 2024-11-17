@@ -31,7 +31,7 @@ import {
 } from "../../redux/groupBalancesSlice";
 import { getUserBalances } from "../api_functions/group_expenses/getUserBalances";
 
-const GroupExpenses = ({ groupId }) => {
+const GroupExpenses = ({ groupId}) => {
   const dispatch = useDispatch();
   const { expenses, loading, error } = useSelector(
     (state) => state.groupExpenses
@@ -300,7 +300,7 @@ const GroupExpenses = ({ groupId }) => {
           >
             {members.map((member) => (
               <MenuItem key={member.id} value={member.user_id}>
-                {member.username}
+                {member.username === loggedInUsername ? "You" : member.username}
               </MenuItem>
             ))}
           </TextField>
@@ -318,7 +318,7 @@ const GroupExpenses = ({ groupId }) => {
           >
             {members.map((member) => (
               <MenuItem key={member.id} value={member.user_id}>
-                {member.username}
+                {member.username === loggedInUsername ? "You" : member.username}
               </MenuItem>
             ))}
           </TextField>
