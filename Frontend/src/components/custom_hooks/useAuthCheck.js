@@ -31,7 +31,7 @@ const useAuthCheck = () => {
 
         const data = await response.json();
         if (response.ok && data.is_logged_in === 0) {
-          dispatch(login()); // User is logged in
+          dispatch(login(data)); // User is logged in
           navigate("/personal_expenses"); // Redirect to personal expenses
         } else {
           dispatch(logout()); // User is not logged in

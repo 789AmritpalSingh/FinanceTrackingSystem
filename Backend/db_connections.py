@@ -211,7 +211,9 @@ def add_user_individual_expense(username, amount, category, date, description):
         connection.close()
 
 
-def get_user_individual_expenses(username, start_date=None, end_date=None, category=None):
+def get_user_individual_expenses(
+    username, start_date=None, end_date=None, category=None
+):
     """
     Fetch user expenses from the database with optional filtering.
 
@@ -455,7 +457,9 @@ def add_new_group_to_groups_table(group_name, creator_user_id):
         cursor.execute(select_query)
         new_group = cursor.fetchone()  # Get the full row details as a dictionary
 
-        return new_group  # Return the row with group_id, group_name, and creator_user_id
+        return (
+            new_group  # Return the row with group_id, group_name, and creator_user_id
+        )
 
     except Exception as e:
         print(f"Error during adding a new group details to the groups table - {e}")
@@ -463,6 +467,7 @@ def add_new_group_to_groups_table(group_name, creator_user_id):
     finally:
         cursor.close()
         connection.close()
+
 
 def get_group_name_from_group_id_in_group_table(group_id):
     """
@@ -499,6 +504,43 @@ def get_group_name_from_group_id_in_group_table(group_id):
         cursor.close()
         connection.close()
 
+
+def get_group_details_from_group_id_in_groups_table(group_id):
+    """
+    This function fetches the group details from the group id provided.
+    :param group_id: The id of the group.
+    :return: Details of the group.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        query = """
+                    SELECT * 
+                    FROM `groups`
+                    WHERE id = %s
+                """
+        cursor.execute(query, (group_id,))
+        group_details = cursor.fetchone()
+
+        if group_details:
+            return group_details
+        else:
+            print(f"No group found with id {group_id}")
+            return None
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching group details for group id {group_id}: {e}")
+        return None
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
 def get_group_id_from_group_name_in_group_table(group_name):
     """
     This function fetches the group id from the group name provided.
@@ -533,6 +575,7 @@ def get_group_id_from_group_name_in_group_table(group_name):
     finally:
         cursor.close()
         connection.close()
+
 
 def get_creator_user_id_from_group_id_in_groups_table(group_id):
     """
@@ -687,6 +730,7 @@ def get_creator_user_id_from_group_name_in_group_table(group_name):
         cursor.close()
         connection.close()
 
+
 def get_all_group_ids_from_groups_table():
     """
     This function fetches all the group ids from the groups table.
@@ -708,7 +752,7 @@ def get_all_group_ids_from_groups_table():
 
         # Unpack the tuple and return a list of group ids
         return [group_id[0] for group_id in group_ids]
-    
+
     except mysql.connector.Error as e:
         print(f"Error fetching group ids from groups table: {e}")
         return []
@@ -716,6 +760,7 @@ def get_all_group_ids_from_groups_table():
     finally:
         cursor.close()
         connection.close()
+
 
 def update_group_name_in_groups_table_using_group_id(group_id, new_group_name):
     """
@@ -750,6 +795,38 @@ def update_group_name_in_groups_table_using_group_id(group_id, new_group_name):
         cursor.close()
         connection.close()
 
+def update_creator_user_id_using_group_id_in_groups_table(new_creator_user_id, group_id):
+    """
+    This function is for updating the creator user id with new creator user id using the group id provided.
+    :param group_id: Id of the group of which to update the creator user id.
+    :param new_creator_user_id: New creator user id to update.
+    :return: True if the creator_user_id was updated successfully else False.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    UPDATE `groups` SET creator_user_id = %s WHERE id = %s
+                """
+
+        cursor.execute(query, (new_creator_user_id, group_id))
+        connection.commit()
+
+        return (
+            cursor.rowcount > 0
+        )  # Return true if any of the row updated, false otherwise
+
+    except mysql.connector.Error as e:
+        print(f"Error updating creator user id to -{new_creator_user_id} for group_id {group_id}: {e}")
+        return False
+
+    finally:
+        cursor.close()
+        connection.close()
 
 def delete_group_from_groups_table_using_group_id(group_id):
     """
@@ -780,6 +857,7 @@ def delete_group_from_groups_table_using_group_id(group_id):
     finally:
         cursor.close()
         connection.close()
+
 
 # ------------------- Group Members table crud operations ----------------------
 
@@ -824,6 +902,7 @@ def add_new_member_to_group_members_table(group_id, user_id):
     finally:
         cursor.close()
         connection.close()
+
 
 def get_groups_details_for_user(user_id):
     """
@@ -894,6 +973,37 @@ def get_all_users_using_group_id_in_group_members_table(group_id):
         cursor.close()
         connection.close()
 
+def get_user_id_using_member_id_in_group_members_table(member_id):
+    """
+    This function fetches the user id using the member id in the group_members table.
+    :param member_id: Id of the member.
+    :return user_id: user_id of the member.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    try:
+        query = """
+                    SELECT user_id
+                    FROM
+                    group_members
+                    WHERE id = %s 
+                """
+
+        cursor.execute(query, (member_id,))
+
+        user_id = cursor.fetchone()
+        return user_id
+
+    except mysql.connector.Error as e:
+        print(f"Error fetching user_id for member id {member_id}: {e}")
+        return None
+
+    finally:
+        cursor.close()
+        connection.close()
 
 def delete_user_from_group_members_table(member_id, group_id):
     """
@@ -927,9 +1037,10 @@ def delete_user_from_group_members_table(member_id, group_id):
         cursor.close()
         connection.close()
 
+
 def delete_all_members_from_group_members_table(group_id):
     """
-    This function is for removing all group members from the group members table using its group id. 
+    This function is for removing all group members from the group members table using its group id.
     This is done when deleting the group basically.
     :param group_id: Id of the group.
     :return: True if the group members removed successfully False otherwise
@@ -950,9 +1061,7 @@ def delete_all_members_from_group_members_table(group_id):
         return cursor.rowcount > 0  # returns true if any of the rows were affected
 
     except mysql.connector.Error as e:
-        print(
-            f"Error deleting group members from the group with id -  {group_id}: {e}"
-        )
+        print(f"Error deleting group members from the group with id -  {group_id}: {e}")
         return False
 
     finally:
@@ -986,8 +1095,19 @@ def add_expense_to_group_expenses_table(group_id, expense_name, amount, paid_by)
         cursor.execute(query, params)
         connection.commit()
 
-        # Fetch the last inserted row details
-        cursor.execute("SELECT * FROM group_expenses WHERE id = LAST_INSERT_ID()")
+        # Fetch the last inserted row details along with the username of the payer
+        query = """
+                    SELECT ge.*, u.username
+                    FROM 
+                    group_expenses ge
+                    JOIN 
+                    users u 
+                    ON 
+                    ge.paid_by = u.id
+                    WHERE 
+                    ge.id = LAST_INSERT_ID()
+                """
+        cursor.execute(query)
         last_expense_details = cursor.fetchone()  # Fetch the single result
         return last_expense_details
 
@@ -1011,8 +1131,15 @@ def get_all_expenses_details_for_a_particular_group_from_group_expenses_table(gr
 
     cursor = connection.cursor(dictionary=True)
 
-    query = "SELECT * FROM group_expenses WHERE group_id = %s"
-
+    query = """
+               SELECT ge.*, u.username 
+               FROM group_expenses ge 
+               JOIN users u 
+               ON 
+               u.id = ge.paid_by 
+               WHERE 
+               ge.group_id = %s
+            """
     try:
         cursor.execute(query, (group_id,))
         group_expenses = cursor.fetchall()
@@ -1151,15 +1278,15 @@ def delete_expense_from_group_expenses_table_using_expense_id(expense_id):
 
 def delete_group_expenses_by_group_id(group_id):
     """
-        This function deletes all the related group expenses and expenses shares for the group id provided.
-        :param group_id: Id of the group provided.
-        :return: 
+    This function deletes all the related group expenses and expenses shares for the group id provided.
+    :param group_id: Id of the group provided.
+    :return:
     """
     try:
         connection = get_db_connection()
         if connection is None:
             return False
-        
+
         cursor = connection.cursor()
 
         # Step 1: Retrieve expense IDs for the given group_id from the group_expenses table
@@ -1173,11 +1300,13 @@ def delete_group_expenses_by_group_id(group_id):
 
             # Step 2: Delete rows in expense_shares table based on expense IDs
             delete_shares_query = "DELETE FROM expense_shares WHERE expense_id IN (%s)"
-            format_strings = ','.join(['%s'] * len(expense_ids))
+            format_strings = ",".join(["%s"] * len(expense_ids))
             cursor.execute(delete_shares_query % format_strings, tuple(expense_ids))
 
             # Step 3: Delete rows in group_expenses table for the given group_id
-            delete_group_expenses_query = "DELETE FROM group_expenses WHERE group_id = %s"
+            delete_group_expenses_query = (
+                "DELETE FROM group_expenses WHERE group_id = %s"
+            )
             cursor.execute(delete_group_expenses_query, (group_id,))
 
             # Commit the changes to the database
@@ -1199,9 +1328,11 @@ def delete_group_expenses_by_group_id(group_id):
         connection.close()
 
 
-def add_expense_share(expense_id, user_id, share_amount, status, direction, settled, settled_date):
+def add_expense_share(
+    expense_id, user_id, share_amount, status, direction, settled, settled_date
+):
     """
-        Insert a user's share of an expense into the `expense_shares` table.
+    Insert a user's share of an expense into the `expense_shares` table.
     """
     connection = get_db_connection()
     if connection is None:
@@ -1213,7 +1344,18 @@ def add_expense_share(expense_id, user_id, share_amount, status, direction, sett
                     INSERT INTO expense_shares (expense_id, user_id, share_amount, status, direction, settled, settled_date)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """
-        cursor.execute(query, (expense_id, user_id, share_amount, status, direction, settled, settled_date))
+        cursor.execute(
+            query,
+            (
+                expense_id,
+                user_id,
+                share_amount,
+                status,
+                direction,
+                settled,
+                settled_date,
+            ),
+        )
         connection.commit()
         return True
 
@@ -1224,6 +1366,7 @@ def add_expense_share(expense_id, user_id, share_amount, status, direction, sett
     finally:
         cursor.close()
         connection.close()
+
 
 def get_expense_shares_from_expense_shares_using_expense_id(expense_id):
     """
@@ -1411,13 +1554,14 @@ def update_expense_share_in_expense_shares_table_using_share_id(
         cursor.close()
         connection.close()
 
+
 def get_pending_shares_between_users(user_id, settle_with_user_id):
     """
-        Retrieve all pending expense shares between two users.
+    Retrieve all pending expense shares between two users.
 
-        :param user_id: ID of the authenticated user.
-        :param settle_with_user_id: ID of the user to settle expenses with.
-        :return: List of dictionaries containing pending share details or None if error occurs.
+    :param user_id: ID of the authenticated user.
+    :param settle_with_user_id: ID of the user to settle expenses with.
+    :return: List of dictionaries containing pending share details or None if error occurs.
     """
     connection = get_db_connection()
     if connection is None:
@@ -1439,11 +1583,14 @@ def get_pending_shares_between_users(user_id, settle_with_user_id):
         return shares
 
     except mysql.connector.Error as e:
-        print(f"Error fetching pending shares between users {user_id} and {settle_with_user_id}: {e}")
+        print(
+            f"Error fetching pending shares between users {user_id} and {settle_with_user_id}: {e}"
+        )
         return None
     finally:
         cursor.close()
         connection.close()
+
 
 def settle_all_shares_for_given_expense_id_in_expense_shares_table(expense_id):
     """
@@ -1505,21 +1652,52 @@ def delete_expense_share_from_expense_shares_table_using_share_id(share_id):
         cursor.close()
         connection.close()
 
-# ---------------------- User balances -----------------------------
 
-def update_user_balances(group_id, paid_by, expense_shares):
+def delete_all_expense_share_from_expense_shares_table_using_user_id(user_id):
     """
-        Update the user_balances table based on the expense shares.
-        :param group_id: The ID of the group where the expense is added.
-        :param paid_by: The user ID of the person who paid for the expense.
-        :param expense_shares: Dictionary of user_id -> share_amount.
+    This function deletes a specific shares related to given user from the expense_shares table.
+
+    :param user_id: ID of the user for which to delete the expense shares.
+    :return: True if the expense shares were deleted successfully for the given user, False otherwise.
     """
     connection = get_db_connection()
     if connection is None:
         return False
 
     cursor = connection.cursor()
-    print(f'Expense shares - {expense_shares}')
+    try:
+        query = """
+                    DELETE FROM expense_shares
+                    WHERE user_id = %s
+                """
+        cursor.execute(query, (user_id,))
+        connection.commit()
+        return True
+
+    except mysql.connector.Error as e:
+        print(f"Error deleting expense shares for user id {user_id}: {e}")
+        connection.rollback()
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+
+# ---------------------- User balances -----------------------------
+
+
+def update_user_balances(group_id, paid_by, expense_shares):
+    """
+    Update the user_balances table based on the expense shares.
+    :param group_id: The ID of the group where the expense is added.
+    :param paid_by: The user ID of the person who paid for the expense.
+    :param expense_shares: Dictionary of user_id -> share_amount.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
     try:
         for user_id, share_amount in expense_shares.items():
             # Skip self-balance updates
@@ -1529,8 +1707,6 @@ def update_user_balances(group_id, paid_by, expense_shares):
             # Calculate the balance change
             balance_change = share_amount
 
-            print(f'User id - {user_id} and balance - {balance_change}')
-
             # Update or insert balance between paid_by(user_id) and user_id(other_user_id)
             query = """
                         INSERT INTO user_balances (user_id, other_user_id, group_id, balance)
@@ -1538,12 +1714,10 @@ def update_user_balances(group_id, paid_by, expense_shares):
                         ON DUPLICATE KEY UPDATE balance = balance + VALUES(balance)
                     """
             params = (paid_by, user_id, group_id, balance_change)
-            print(f'Params - {params}')
             cursor.execute(query, params)
 
             # Update the reverse balance (for user_id's perspective)
             reverse_params = (user_id, paid_by, group_id, -balance_change)
-            print(f'Reverse params - {reverse_params}')
             cursor.execute(query, reverse_params)
 
         connection.commit()
@@ -1557,13 +1731,14 @@ def update_user_balances(group_id, paid_by, expense_shares):
         cursor.close()
         connection.close()
 
+
 def get_user_balances_from_user_balances_table(user_id, group_id):
     """
-        This function retrieves user balance details from the user_balances table.
+    This function retrieves user balance details from the user_balances table.
 
-        :param user_id: ID of the user for which fetching the balance detail.
-        :param group_id: ID of the group from where fetching the balance.
-        :return: other_user_id and balance
+    :param user_id: ID of the user for which fetching the balance detail.
+    :param group_id: ID of the group from where fetching the balance.
+    :return: other_user_id and balance
     """
     connection = get_db_connection()
     if connection is None:
@@ -1584,6 +1759,80 @@ def get_user_balances_from_user_balances_table(user_id, group_id):
             f"Error fetching user balance details for user id {user_id} and group id {group_id}: {e}"
         )
         return None
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def delete_balances_for_given_user_from_group_in_user_balances_table(user_id, group_id):
+    """
+        This function is for deleting all the balances of the given user in the user_balances table.
+        :param user_id: Id of the user to delete balance for.
+        :param group_id: Id of the group the user is involved in.
+        :return: True if the balance were deleted successfully false otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    DELETE FROM user_balances 
+                    WHERE 
+                    (user_id = %s OR other_user_id = %s) 
+                    AND group_id = %s;
+                """
+
+        cursor.execute(query, (user_id, user_id, group_id))
+        connection.commit()
+
+        return True
+
+    except mysql.connector.Error as e:
+        print(
+            f"Error deleting balance for user id - {user_id} and group_id {group_id}: {e}"
+        )
+        return False
+
+    finally:
+        cursor.close()
+        connection.close()
+
+def clear_balance_for_given_user_from_group_in_user_balances_table(user_id, group_id):
+    """
+        This function is for clearing all the balances of the given user in the user_balances table.
+        :param user_id: Id of the user to clear balance for.
+        :param group_id: Id of the group the user is involved in.
+        :return: True if the balance was cleared successfully false otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+        query = """
+                    UPDATE user_balances 
+                    SET balance = 0 
+                    WHERE 
+                    (user_id = %s OR other_user_id = %s) 
+                    AND group_id = %s;
+                """
+
+        cursor.execute(query, (user_id, user_id, group_id))
+        connection.commit()
+
+        return True
+
+    except mysql.connector.Error as e:
+        print(
+            f"Error updating balance for user id - {user_id} and group_id {group_id}: {e}"
+        )
+        return False
+
     finally:
         cursor.close()
         connection.close()

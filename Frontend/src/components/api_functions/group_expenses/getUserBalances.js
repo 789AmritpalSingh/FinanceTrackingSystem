@@ -1,4 +1,4 @@
-export const getGroupBalances = async (token, groupId) => {
+export const getUserBalances = async (token, groupId) => {
     try {
       const response = await fetch(`http://localhost:5000/get_user_balances?group_id=${groupId}`, {
         method: "GET",

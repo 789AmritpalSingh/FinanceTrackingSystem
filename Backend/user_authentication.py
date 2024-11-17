@@ -34,6 +34,8 @@ class UserRegistration(Resource):
         return {
             "message": "User created successfully",
             "access_token": access_token,
+            "username": username,
+            "id": user_details["id"]
         }, 201
 
 
@@ -57,7 +59,7 @@ class UserLogin(Resource):
 
         db.update_user_as_logged_in(username)
         access_token = create_access_token(identity=username)
-        return {"access_token": access_token}, 200
+        return {"access_token": access_token, "username": username, "id": user_details["id"]}, 200
 
 
 class ProtectedResource(Resource):

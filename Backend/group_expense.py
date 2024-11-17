@@ -57,6 +57,27 @@ def get_name_of_creator_of_the_group():
     return jsonify(creator_username_of_group), 200
 
 @jwt_required()
+def get_group_details_using_group_id():
+    """
+        Endpoint to retreive the group details using id of the group.
+    """
+    group_id = request.args.get('group_id')
+
+    # Convert group_id to integer for comparison
+    try:
+        group_id = int(group_id)
+    except ValueError:
+        return jsonify({"message": "Invalid group ID format."}), 400
+    
+    group_details = db.get_group_details_from_group_id_in_groups_table(group_id)
+
+    if group_details:
+        return jsonify({"group_details": group_details}), 200
+    
+    else:
+        return jsonify({"group_details": [], "message": "Cannot find any group for this id."}), 404
+
+@jwt_required()
 def update_group_name(group_id):
     """
         Function for changing the name of the group.
@@ -86,6 +107,37 @@ def update_group_name(group_id):
         return jsonify({"message": "Group name updated successfully"}), 200
     else:
         return jsonify({"message": "Failed to update group name."}), 500
+    
+@jwt_required()
+def update_group_creator(group_id):
+    """
+        Function for changing the creator of the group.
+        :param group_id: ID of the group for which to change the creator.
+    """
+    username = get_jwt_identity()
+    data = request.get_json()  # Get JSON data from the request body
+    new_creator_user_id = data.get('new_creator_user_id')  # Retrieve the new creator user id
+
+    # Retrieve user ID from the database using the username
+    user_id_tuple_result = db.get_user_id_from_username_in_users_table(username)
+    user_id = user_id_tuple_result[0] if user_id_tuple_result else None
+
+    if user_id is None:
+        return jsonify({"message": "User not found."}), 404
+
+    # Ensure the user trying to change the creator is the creator of the group
+    creator_user_id = db.get_creator_user_id_from_group_id_in_groups_table(group_id)
+    
+    if creator_user_id != user_id:
+        # if the user trying to update the creator is not the creator of the group
+        return jsonify({"message": "Only creator of the group can update the creator"}), 404
+
+    # Update the creator of the group finally
+    result = db.update_creator_user_id_using_group_id_in_groups_table(new_creator_user_id, group_id)
+    if result:
+        return jsonify({"message": "Group creator updated successfully"}), 200
+    else:
+        return jsonify({"message": "Failed to update group creator."}), 500
 
 @jwt_required()
 def delete_group(group_id):
@@ -242,15 +294,24 @@ def delete_member_from_group(member_id, group_id):
     # Retrieve user trying to delete user ID from the database using the username
     user_id_tuple_result = db.get_user_id_from_username_in_users_table(username)
     user_id = user_id_tuple_result[0] if user_id_tuple_result else None
-
-    group_creator_user_id = db.get_creator_user_id_from_group_id_in_groups_table(group_id)
-
-    if user_id != group_creator_user_id:
-        # If user is not the creator of the group.
-        return jsonify({"message": "You are not allowed to remove the member from the group."}), 404
     
     if not member_id:
         return jsonify({"message": "Member you are trying to delete does not exist"}), 404
+    
+    # Fetch the user_id using the member id provided
+    member_user_id = db.get_user_id_using_member_id_in_group_members_table(member_id)[0]
+    
+    # Delete any existing balances for this user
+    balances_deleted = db.delete_balances_for_given_user_from_group_in_user_balances_table(member_user_id, group_id)
+
+    if not balances_deleted:
+        return jsonify({"message": "Failed to delete the balances for this user."}), 500
+    
+    # Delete all the expense shares for the given user
+    expense_shares_deleted = db.delete_all_expense_share_from_expense_shares_table_using_user_id(user_id)
+
+    if not expense_shares_deleted:
+        return jsonify({"message": "Failed to delete the expense shares for the given user."}), 500
 
     # Remove the member finally
     result = db.delete_user_from_group_members_table(member_id, group_id)
@@ -294,8 +355,6 @@ def add_expense_to_group(custom_shares=None):
     amount = data.get('amount')
     paid_by = data.get('paid_by')
     split_between = data.get('split_between')  # List of user_ids to split the expense between
-
-    print(f'Split between - {split_between}, paid by - {paid_by}')
 
     if not all([group_id, expense_name, paid_by, amount, split_between]):
         # If group name is not provided.
@@ -347,7 +406,14 @@ def add_expense_to_group(custom_shares=None):
             if not share_added:
                 return jsonify({"message": f"Failed to add share for user_id {member_id}", "expense_details": []}), 500
             
-        return jsonify({"message": "Expense added and split successfully!", "expense_details": expense_details}), 201
+        # Fetch updated balances after adding the expense
+        updated_balances = db.get_user_balances_from_user_balances_table(user_id, group_id)
+
+        return jsonify({
+            "message": "Expense added and split successfully!",
+            "expense_details": expense_details,
+            "updated_balances": updated_balances
+        }), 201
     else:
         return jsonify({"message": "Failed to add expense."}), 500
 

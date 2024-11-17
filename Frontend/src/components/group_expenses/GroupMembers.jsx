@@ -25,16 +25,29 @@ import {
   addGroupMember,
   removeGroupMemberFromStore,
 } from "../../redux/groupMembersSlice";
+import {
+  setLoading as setExpenseLoading,
+  setGroupExpense,
+  setGroupExpenseError,
+} from "../../redux/groupExpensesSlice";
 import { getGroupMembers } from "../api_functions/group_expenses/getGroupMembers";
 import { addNewMemberToGroup } from "../api_functions/group_expenses/addNewMemberToGroup";
 import { removeGroupMember } from "../api_functions/group_expenses/removeGroupMember";
 import GroupExpenses from "./GroupExpenses";
+import {
+  setGroupBalances,
+  setGroupBalancesError,
+  setGroupBalancesLoading,
+} from "../../redux/groupBalancesSlice";
+import { getGroupExpenses } from "../api_functions/group_expenses/getGroupExpenses";
+import { getUserBalances } from "../api_functions/group_expenses/getUserBalances";
 
-const GroupMembers = ({ groupId }) => {
+const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
   const dispatch = useDispatch();
   const members = useSelector((state) => state.groupMembers.members);
   const loading = useSelector((state) => state.groupMembers.loading);
   const memberError = useSelector((state) => state.groupMembers.error);
+  const loggedInUsername = useSelector((state) => state.auth.username);
 
   const [newMemberUsername, setNewMemberUsername] = useState("");
   const [deleteMemberConfirmOpen, setDeleteMemberConfirmOpen] = useState(false);
@@ -58,6 +71,25 @@ const GroupMembers = ({ groupId }) => {
     }
   };
 
+  const refetchExpensesAndBalances = async () => {
+    const token = localStorage.getItem("token");
+    dispatch(setExpenseLoading(true));
+    dispatch(setGroupBalancesLoading(true));
+    try {
+      const expensesList = await getGroupExpenses(token, groupId);
+      dispatch(setGroupExpense(expensesList));
+
+      const balancesList = await getUserBalances(token, groupId);
+      dispatch(setGroupBalances(balancesList));
+    } catch (error) {
+      dispatch(setGroupExpenseError(error.message));
+      dispatch(setGroupBalancesError(error.message));
+    } finally {
+      dispatch(setExpenseLoading(false));
+      dispatch(setGroupBalancesLoading(false));
+    }
+  };
+
   const handleAddNewMember = async () => {
     if (newMemberUsername.trim() === "") {
       dispatch(setMemberError("Username cannot be empty."));
@@ -66,13 +98,19 @@ const GroupMembers = ({ groupId }) => {
 
     try {
       const token = localStorage.getItem("token");
-      const newMember = await addNewMemberToGroup(token, groupId, newMemberUsername);
-      dispatch(addGroupMember({
-        id: newMember.new_member_details.id,
-        user_id: newMember.new_member_details.user_id,
-        username: newMember.username,
-        group_id: parseInt(groupId),
-      }));
+      const newMember = await addNewMemberToGroup(
+        token,
+        groupId,
+        newMemberUsername
+      );
+      dispatch(
+        addGroupMember({
+          id: newMember.new_member_details.id,
+          user_id: newMember.new_member_details.user_id,
+          username: newMember.username,
+          group_id: parseInt(groupId),
+        })
+      );
       setNewMemberUsername("");
     } catch (error) {
       dispatch(setMemberError(error.message));
@@ -89,6 +127,7 @@ const GroupMembers = ({ groupId }) => {
       const token = localStorage.getItem("token");
       await removeGroupMember(token, memberIdToDelete, groupId);
       dispatch(removeGroupMemberFromStore(memberIdToDelete));
+      await refetchExpensesAndBalances(); // Update expenses and balances
       setDeleteMemberConfirmOpen(false);
     } catch (error) {
       dispatch(setMemberError(error.message));
@@ -101,7 +140,10 @@ const GroupMembers = ({ groupId }) => {
         Group Members
       </Typography>
 
-      <Paper elevation={3} sx={{ padding: 2, backgroundColor: "#333", borderRadius: 2 }}>
+      <Paper
+        elevation={3}
+        sx={{ padding: 2, backgroundColor: "#333", borderRadius: 2 }}
+      >
         {loading ? (
           <Typography variant="body1" sx={{ color: "white" }}>
             Loading...
@@ -112,17 +154,27 @@ const GroupMembers = ({ groupId }) => {
               <React.Fragment key={member.id}>
                 <ListItem
                   secondaryAction={
-                    <IconButton
-                      edge="end"
-                      color="secondary"
-                      onClick={() => handleDeleteMember(member.id)}
-                      aria-label="delete member"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                    // Show delete button only if the logged-in user is the group creator
+                    loggedInUserId === creatorUserId && (
+                      <IconButton
+                        edge="end"
+                        color="secondary"
+                        onClick={() => handleDeleteMember(member.id)}
+                        aria-label="delete member"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )
                   }
                 >
-                  <ListItemText primary={member.username} sx={{color: "white"}}/>
+                  <ListItemText
+                    primary={
+                      member.username === loggedInUsername
+                        ? "You"
+                        : member.username
+                    }
+                    sx={{ color: "white" }}
+                  />
                 </ListItem>
                 <Divider sx={{ backgroundColor: "#555" }} />
               </React.Fragment>
@@ -143,20 +195,32 @@ const GroupMembers = ({ groupId }) => {
           variant="outlined"
           value={newMemberUsername}
           onChange={(e) => setNewMemberUsername(e.target.value)}
-          sx={{ flexGrow: 1, backgroundColor: "#444", color: "white", borderRadius: 1 }}
+          sx={{
+            flexGrow: 1,
+            backgroundColor: "#444",
+            color: "white",
+            borderRadius: 1,
+          }}
           InputLabelProps={{ style: { color: "#ccc" } }}
           InputProps={{ style: { color: "white" } }}
         />
-        <Button variant="contained" color="primary" onClick={handleAddNewMember}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleAddNewMember}
+        >
           Add Member
         </Button>
       </Box>
 
       {/* Render Group Expenses */}
-      <GroupExpenses groupId={groupId}/>
+      <GroupExpenses groupId={groupId} />
 
       {/* Confirmation Dialog for Deleting Group Member */}
-      <Dialog open={deleteMemberConfirmOpen} onClose={() => setDeleteMemberConfirmOpen(false)}>
+      <Dialog
+        open={deleteMemberConfirmOpen}
+        onClose={() => setDeleteMemberConfirmOpen(false)}
+      >
         <DialogTitle>Confirm Member Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -164,7 +228,10 @@ const GroupMembers = ({ groupId }) => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteMemberConfirmOpen(false)} color="primary">
+          <Button
+            onClick={() => setDeleteMemberConfirmOpen(false)}
+            color="primary"
+          >
             Cancel
           </Button>
           <Button onClick={confirmDeleteMember} color="secondary">

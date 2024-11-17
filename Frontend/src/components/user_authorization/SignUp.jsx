@@ -98,7 +98,7 @@ const SignUp = () => {
       setSnackbarMessage("User registered successfully!");
       setSnackbarOpen(true);
 
-      dispatch(login()); // approve user authorization.
+      dispatch(login(data)); // approve user authorization.
 
       // Navigate to the personal expenses
       navigate("/personal_expenses");

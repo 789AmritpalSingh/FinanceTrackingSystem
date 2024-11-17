@@ -6,7 +6,7 @@ from user_authentication import UserRegistration, UserLogin, ProtectedResource, 
 from personal_expenses import add_individual_expense, get_user_expenses, delete_user_expenses, update_user_expense
 from group_expense import create_new_group, get_name_of_creator_of_the_group, update_group_name, delete_group, \
 add_new_member_to_group, get_all_users_in_the_group, delete_member_from_group, add_expense_to_group, settle_expense, \
-settle_all_expenses_with_user, get_all_group_names_user_is_involved_in, get_all_expenses_in_the_group, get_user_balances
+settle_all_expenses_with_user, get_all_group_names_user_is_involved_in, get_all_expenses_in_the_group, get_user_balances, get_group_details_using_group_id, update_group_creator
 from config import JWT_SECRET_KEY
 
 app = Flask(__name__)
@@ -34,6 +34,7 @@ app.add_url_rule('/update_user_log_out', 'update_user_log_out', update_user_as_l
 # Personal Expense-related routes
 app.add_url_rule('/add_individual_expense', 'add_individual_expense', add_individual_expense, methods=['POST'])
 app.add_url_rule('/get_user_expenses', 'get_user_expenses', get_user_expenses, methods=['GET'])
+app.add_url_rule('/get_group_details_using_group_id', 'get_group_details_using_group_id', get_group_details_using_group_id, methods=['GET'])
 app.add_url_rule('/delete_expense/<int:expense_id>', 'delete_user_expenses', delete_user_expenses, methods=['DELETE'])
 app.add_url_rule('/update_expense/<int:expense_id>', 'update_user_expense', update_user_expense, methods=['PUT'])
 
@@ -41,6 +42,7 @@ app.add_url_rule('/update_expense/<int:expense_id>', 'update_user_expense', upda
 app.add_url_rule('/create_group', 'create_new_group', create_new_group, methods=['POST'])
 app.add_url_rule('/get_creator_name_of_the_group', 'get_creater_name', get_name_of_creator_of_the_group, methods=['GET'])
 app.add_url_rule('/update_group_name/<int:group_id>', 'update_name_of_group', update_group_name, methods=['PUT'])
+app.add_url_rule('/update_group_creator/<int:group_id>', 'update_creator_of_group', update_group_creator, methods=['PUT'])
 app.add_url_rule('/delete_group/<int:group_id>', 'delete_group', delete_group, methods=['DELETE'])
 
 app.add_url_rule('/add_new_member', 'add_new_member', add_new_member_to_group, methods=['POST'])

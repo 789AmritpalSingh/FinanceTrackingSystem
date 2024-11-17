@@ -24,8 +24,12 @@ import {
   setLoading,
 } from "../../redux/groupExpensesSlice";
 import { getGroupExpenses } from "../api_functions/group_expenses/getGroupExpenses";
-import { setGroupBalances, setGroupBalancesError, setGroupBalancesLoading } from "../../redux/groupBalancesSlice";
-import { getGroupBalances } from "../api_functions/group_expenses/getGroupBalances";
+import {
+  setGroupBalances,
+  setGroupBalancesError,
+  setGroupBalancesLoading,
+} from "../../redux/groupBalancesSlice";
+import { getUserBalances } from "../api_functions/group_expenses/getUserBalances";
 
 const GroupExpenses = ({ groupId }) => {
   const dispatch = useDispatch();
@@ -33,7 +37,10 @@ const GroupExpenses = ({ groupId }) => {
     (state) => state.groupExpenses
   );
   const members = useSelector((state) => state.groupMembers.members);
-  const { balances, balancesLoading, balancesError } = useSelector((state) => state.groupBalances);
+  const loggedInUsername = useSelector((state) => state.auth.username);
+  const { balances, balancesLoading, balancesError } = useSelector(
+    (state) => state.groupBalances
+  );
 
   // State for managing the add expense modal and input fields
   const [addExpenseModalOpen, setAddExpenseModalOpen] = useState(false);
@@ -58,7 +65,7 @@ const GroupExpenses = ({ groupId }) => {
         const expensesList = await getGroupExpenses(token, groupId);
         dispatch(setGroupExpense(expensesList));
 
-        const balancesList = await getGroupBalances(token, groupId); // Fetch balances
+        const balancesList = await getUserBalances(token, groupId); // Fetch balances
         dispatch(setGroupBalances(balancesList));
       } catch (err) {
         dispatch(setGroupExpenseError(err.message));
@@ -91,7 +98,8 @@ const GroupExpenses = ({ groupId }) => {
 
     try {
       const data = await addNewExpenseToGroup(token, newExpenseData);
-      dispatch(addGroupExpense(data.expense_details))
+      dispatch(addGroupExpense(data.expense_details));
+      dispatch(setGroupBalances(data.updated_balances));
       alert(data.message); // Notify user on success
       handleAddExpenseModalClose(); // Close modal on success
       setSnackbarOpen(true); // Open feedback snackbar
@@ -106,14 +114,14 @@ const GroupExpenses = ({ groupId }) => {
   };
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Intl.DateTimeFormat('en-US', options).format(new Date(dateString));
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Intl.DateTimeFormat("en-US", options).format(
+      new Date(dateString)
+    );
   };
-  
 
   return (
     <Box sx={{ padding: 4 }}>
-
       {/* Display Balances */}
       <Typography
         variant="h6"
@@ -137,10 +145,11 @@ const GroupExpenses = ({ groupId }) => {
           <List>
             {balances.length > 0 ? (
               balances.map((balance) => {
+                // Find the corresponding member to get the username
                 const member = members.find(
                   (m) => m.user_id === balance.other_user_id
                 );
-                const username = member?.username || "Unknown";
+                const username = member?.username || "Unknown"; // Default to "Unknown" if member is not found
                 const absoluteBalance = Math.abs(balance.balance);
 
                 return (
@@ -159,7 +168,8 @@ const GroupExpenses = ({ groupId }) => {
                     />
                   </ListItem>
                 );
-              })) : (
+              })
+            ) : (
               <Typography
                 variant="body1"
                 color="white"
@@ -172,7 +182,11 @@ const GroupExpenses = ({ groupId }) => {
         </Paper>
       )}
 
-      <Typography variant="h6" gutterBottom sx={{ color: "#00e676", fontWeight: "bold", marginTop: 5 }}>
+      <Typography
+        variant="h6"
+        gutterBottom
+        sx={{ color: "#00e676", fontWeight: "bold", marginTop: 5 }}
+      >
         Expenses
       </Typography>
 
@@ -192,22 +206,32 @@ const GroupExpenses = ({ groupId }) => {
         >
           <List>
             {expenses.length > 0 ? (
-              expenses.map((expense) => (
-                <React.Fragment key={expense?.id}>
-                  <ListItem>
-                    <ListItemText
-                      primary={expense?.expense_name}
-                      secondary={`Amount: $${expense?.amount} - Paid by: ${members.find((m) => m.user_id === expense?.paid_by)
-                        ?.username || "Unknown"} - Date: ${formatDate(expense?.date)}`}
-                      sx={{ color: "white" }}
-                      secondaryTypographyProps={{
-                        style: { color: "#b0b0b0" }, // Light gray color for secondary text
-                      }}
-                    />
-                  </ListItem>
-                  <Divider sx={{ backgroundColor: "#555" }} />
-                </React.Fragment>
-              ))
+              expenses.map((expense) => {
+                const displayName =
+                  expense?.username === loggedInUsername
+                    ? "You"
+                    : expense?.username || "Unknown";
+
+                return (
+                  <React.Fragment key={expense?.id}>
+                    <ListItem>
+                      <ListItemText
+                        primary={expense?.expense_name}
+                        secondary={`Amount: $${
+                          expense?.amount
+                        } - Paid by: ${displayName} - Date: ${formatDate(
+                          expense?.date
+                        )}`}
+                        sx={{ color: "white" }}
+                        secondaryTypographyProps={{
+                          style: { color: "#b0b0b0" }, // Light gray color for secondary text
+                        }}
+                      />
+                    </ListItem>
+                    <Divider sx={{ backgroundColor: "#555" }} />
+                  </React.Fragment>
+                );
+              })
             ) : (
               <Typography
                 variant="body1"

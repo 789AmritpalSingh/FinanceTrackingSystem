@@ -54,7 +54,7 @@ const Login = () => {
     if (response.ok) {
       localStorage.setItem("token", data.access_token); // Store the JWT token
 
-      dispatch(login()); // Dispatch the login action
+      dispatch(login(data)); // Dispatch the login action
 
       // Navigate to the personal expenses
       navigate("/personal_expenses");

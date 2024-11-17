@@ -37,7 +37,7 @@ const ProtectedRoute = ({ children }) => {
 
         if (user_details.ok && data.is_logged_in === 0) {
           console.log("Calling log in action")
-          dispatch(login()); // User is logged in
+          dispatch(login(data)); // User is logged in
         } else {
           console.log('Calling log out api')
           // Call logout API if user is not logged in or token is invalid
