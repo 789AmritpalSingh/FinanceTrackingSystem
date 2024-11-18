@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   removeGroup,
@@ -41,6 +41,7 @@ import { changeGroupCreator } from "../api_functions/group_expenses/changeGroupC
 const GroupDetails = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const group = useSelector((state) =>
     state.groups.groups.find((g) => g.id === parseInt(groupId))
@@ -62,6 +63,28 @@ const GroupDetails = () => {
   const [leaveGroupConfirmOpen, setLeaveGroupConfirmOpen] = useState(false);
   const [selectNewCreatorOpen, setSelectNewCreatorOpen] = useState(false);
   const [newCreatorId, setNewCreatorId] = useState("");
+
+  useEffect(() => {
+    // Function to clear Redux states if navigating away from the group detail page
+    const handleNavigation = () => {
+      console.log('Location pathname', location.pathname)
+      const isGroupPage = location.pathname === `/group_expenses/${groupId}`;
+      console.log('Is group page', isGroupPage)
+      if (!isGroupPage) {
+        dispatch(clearGroupMembersState());
+        dispatch(clearGroupExpensesState());
+        dispatch(clearGroupBalancesState());
+      }
+    };
+
+    console.log('Calling the clean up handler')
+    // Call the cleanup handler on location change
+    handleNavigation();
+
+    return () => {
+      handleNavigation();
+    };
+  }, [location.pathname, groupId, dispatch]);
 
   // Fetch groups on if redux state is empty i.e. there are no groups
   useEffect(() => {

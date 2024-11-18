@@ -214,7 +214,7 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
       </Box>
 
       {/* Render Group Expenses */}
-      <GroupExpenses groupId={groupId} loggedInUsername={loggedInUsername}/>
+      <GroupExpenses groupId={groupId} loggedInUserId={loggedInUserId}/>
 
       {/* Confirmation Dialog for Deleting Group Member */}
       <Dialog

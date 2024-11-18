@@ -22,6 +22,11 @@ const groupExpensesSlice = createSlice({
             state.loading = false;
             state.error = null;
         },
+        removeGroupExpense: (state, action) => {
+            state.expenses = state.expenses.filter(
+                (expense) => expense.id !== action.payload
+            );
+        },
         setLoading: (state, action) => {
             state.loading = action.payload;
         },
@@ -31,5 +36,5 @@ const groupExpensesSlice = createSlice({
     },
 });
 
-export const { setGroupExpense, addGroupExpense, clearGroupExpensesState, setLoading, setGroupExpenseError } = groupExpensesSlice.actions;
+export const { setGroupExpense, addGroupExpense, clearGroupExpensesState, removeGroupExpense, setLoading, setGroupExpenseError } = groupExpensesSlice.actions;
 export default groupExpensesSlice.reducer;

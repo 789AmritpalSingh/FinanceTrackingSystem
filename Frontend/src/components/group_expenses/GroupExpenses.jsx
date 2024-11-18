@@ -14,11 +14,17 @@ import {
   Paper,
   ListItemText,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { addNewExpenseToGroup } from "../api_functions/group_expenses/addNewExpenseToGroup";
 import {
   addGroupExpense,
+  removeGroupExpense,
   setGroupExpense,
   setGroupExpenseError,
   setLoading,
@@ -30,8 +36,9 @@ import {
   setGroupBalancesLoading,
 } from "../../redux/groupBalancesSlice";
 import { getUserBalances } from "../api_functions/group_expenses/getUserBalances";
+import { deleteExpense } from "../api_functions/group_expenses/deleteExpense";
 
-const GroupExpenses = ({ groupId}) => {
+const GroupExpenses = ({ groupId, loggedInUserId }) => {
   const dispatch = useDispatch();
   const { expenses, loading, error } = useSelector(
     (state) => state.groupExpenses
@@ -41,6 +48,12 @@ const GroupExpenses = ({ groupId}) => {
   const { balances, balancesLoading, balancesError } = useSelector(
     (state) => state.groupBalances
   );
+  const creatorUserId = useSelector((state) =>
+    state.groups.groups.find((g) => g.id === parseInt(groupId))
+  )?.creator_user_id;
+
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
 
   // State for managing the add expense modal and input fields
   const [addExpenseModalOpen, setAddExpenseModalOpen] = useState(false);
@@ -110,6 +123,31 @@ const GroupExpenses = ({ groupId}) => {
       setSplitBetween([]);
     } catch (error) {
       dispatch(setGroupExpenseError(error.message));
+    }
+  };
+
+  const handleDeleteExpense = async () => {
+    if (!expenseToDelete) return;
+
+    const token = localStorage.getItem("token");
+    try {
+      const { message, updated_balances } = await deleteExpense(
+        token,
+        expenseToDelete,
+        groupId
+      );
+
+      // Update Redux
+      dispatch(removeGroupExpense(expenseToDelete));
+      dispatch(setGroupBalances(updated_balances));
+
+      // Notify success
+      alert(message);
+    } catch (error) {
+      alert(`Failed to delete expense: ${error.message}`);
+    } finally {
+      setConfirmDeleteOpen(false);
+      setExpenseToDelete(null);
     }
   };
 
@@ -212,9 +250,28 @@ const GroupExpenses = ({ groupId}) => {
                     ? "You"
                     : expense?.username || "Unknown";
 
+                // Check if the logged-in user is either the creator or the payee
+                const canDelete =
+                  loggedInUserId === creatorUserId ||
+                  loggedInUserId === expense.paid_by;
+
                 return (
                   <React.Fragment key={expense?.id}>
-                    <ListItem>
+                    <ListItem
+                      secondaryAction={
+                        canDelete && (
+                          <Button
+                            color="error"
+                            onClick={() => {
+                              setExpenseToDelete(expense.id);
+                              setConfirmDeleteOpen(true); // Open confirmation dialog
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        )
+                      }
+                    >
                       <ListItemText
                         primary={expense?.expense_name}
                         secondary={`Amount: $${
@@ -253,6 +310,28 @@ const GroupExpenses = ({ groupId}) => {
       >
         Add New Expense
       </Button>
+
+      {/* Confirmation Dialog when deleting expense */}
+      <Dialog
+        open={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+      >
+        <DialogTitle>Confirm Expense Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this expense? This action cannot be
+            undone and will update balances accordingly.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteExpense} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Modal for Adding a New Expense */}
       <Modal open={addExpenseModalOpen} onClose={handleAddExpenseModalClose}>

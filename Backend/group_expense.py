@@ -540,6 +540,60 @@ def settle_all_expenses_with_user():
 
     return jsonify({"message": "All expenses settled with specified user successfully!"}), 200
 
+@jwt_required()
+def delete_expense(expense_id, group_id):
+    """
+        Deletes an expense by its ID, updating user balances and removing associated shares.
+        :param expense_id: ID of the expense to delete.
+        :param group_id: ID of the group.
+    """
+    username = get_jwt_identity()
+
+    # Retrieve user ID from the username
+    user_id_tuple_result = db.get_user_id_from_username_in_users_table(username)
+    user_id = user_id_tuple_result[0] if user_id_tuple_result else None
+
+    if not user_id:
+        return jsonify({"message": "User not found"}), 404
+
+    # Fetch the group's creator user ID
+    creator_user_id = db.get_creator_user_id_from_group_id_in_groups_table(group_id)
+
+    # Fetch the payee (who paid the expense)
+    payee_user_id = db.get_payee_user_id_from_expense_id_in_group_expenses_table(expense_id)
+    if not payee_user_id:
+        return jsonify({"message": "Failed to find the payee of this expense"}), 404
+
+    # Validate authorization: user must be the creator or the payee
+    if creator_user_id != user_id and user_id != payee_user_id:
+        return jsonify({"message": "Only the group creator or the payee can delete this expense"}), 403
+
+    # Fetch expense shares (user_id, share_amount)
+    expense_shares = db.get_user_id_and_share_amount_from_expense_shares_table_using_expense_id(expense_id)
+    if not expense_shares:
+        return jsonify({"message": "No expense shares found for this expense. Deletion aborted."}), 404
+
+    # Update user balances
+    balances_updated = db.update_user_balances_when_deleting_expense_using_expense_shares_in_user_balances_table(expense_shares, payee_user_id, group_id)
+    if not balances_updated:
+        return jsonify({"message": "Failed to update user balances while deleting the expense"}), 500
+
+    # Fetch updated balances
+    updated_balances = db.get_user_balances_from_user_balances_table(user_id, group_id)
+    if updated_balances is None:
+        return jsonify({"message": "Failed to fetch updated balances"}), 500
+
+    # Delete all expense shares for the expense
+    expense_shares_deleted = db.delete_all_expense_shares_from_expense_shares_table_using_expense_id(expense_id)
+    if not expense_shares_deleted:
+        return jsonify({"message": "Failed to delete the expense shares"}), 500
+
+    # Delete the expense itself
+    expense_deleted = db.delete_expense_from_group_expenses_table_using_expense_id(expense_id)
+    if expense_deleted:
+        return jsonify({"message": "Expense deleted successfully", "updated_balances": updated_balances}), 200
+    else:
+        return jsonify({"message": "Failed to delete the expense"}), 500
 
 @jwt_required()
 def get_all_expenses_in_the_group():
