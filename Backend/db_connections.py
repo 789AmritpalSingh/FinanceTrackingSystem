@@ -1071,17 +1071,16 @@ def delete_all_members_from_group_members_table(group_id):
 
 # --------------------- Group expenses table CRUD operations ----------------------
 
-
 def add_expense_to_group_expenses_table(group_id, expense_name, amount, paid_by):
     """
-    Insert a new expense details into the group_expenses table.
+        Insert a new expense details into the group_expenses table.
 
-    :param group_id: The id of the group.
-    :param expense_name: The name of the expense getting added.
-    :param amount: Amount of the expense paid by the person.
-    :param paid_by: Id of the user who paid the expense.
-    :param date: Date of adding expense to the group.
-    :return: True if the expense was added successfully, False otherwise.
+        :param group_id: The id of the group.
+        :param expense_name: The name of the expense getting added.
+        :param amount: Amount of the expense paid by the person.
+        :param paid_by: Id of the user who paid the expense.
+        :param date: Date of adding expense to the group.
+        :return: True if the expense was added successfully, False otherwise.
     """
     connection = get_db_connection()
     if connection is None:
@@ -1108,12 +1107,44 @@ def add_expense_to_group_expenses_table(group_id, expense_name, amount, paid_by)
                     ge.id = LAST_INSERT_ID()
                 """
         cursor.execute(query)
-        last_expense_details = cursor.fetchone()  # Fetch the single result
-        return last_expense_details
+        expense_details = cursor.fetchone()
+        print('Expense details', expense_details)
+
+        return expense_details
 
     except Exception as e:
         print(f"Error during adding a new expense to the group_expenses table - {e}")
         return None
+    finally:
+        cursor.close()
+        connection.close()
+
+def get_expense_share_details_using_expense_id(expense_id):
+    """
+        This function fetches the last added expense's share details using the expense id provided.
+        :param expense_id: Id of the expense.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        query = """
+                    SELECT es.user_id, es.share_amount, u.username as share_username
+                    FROM expense_shares es
+                    JOIN users u ON es.user_id = u.id
+                    WHERE es.expense_id = %s
+                """
+        cursor.execute(query, (expense_id,))
+        expense_shares = cursor.fetchall()
+
+        return expense_shares
+    except mysql.connector.Error as e:
+        print(f"Error fetching expense share details for expense id - {expense_id}: {e}")
+        return None
+
     finally:
         cursor.close()
         connection.close()
@@ -1178,8 +1209,22 @@ def get_all_expenses_details_for_a_particular_group_from_group_expenses_table(gr
     try:
         cursor.execute(query, (group_id,))
         group_expenses = cursor.fetchall()
-        return group_expenses
 
+        # Add shares for each expense
+        for expense in group_expenses:
+            expense_id = expense["id"]
+
+            # Fetch share details for this expense
+            share_query =   """
+                                SELECT es.user_id, es.share_amount, u.username AS share_username
+                                FROM expense_shares es
+                                JOIN users u ON es.user_id = u.id
+                                WHERE es.expense_id = %s
+                            """
+            cursor.execute(share_query, (expense_id,))
+            expense["shares"] = cursor.fetchall()
+
+        return group_expenses
     except mysql.connector.Error as e:
         print(
             f"Error fetching expense details from group_expenses table using group id : {group_id}: {e}"
@@ -1279,6 +1324,37 @@ def update_expense_details_for_a_particular_expense_using_the_expense_id(
         cursor.close()
         connection.close()
 
+def update_expense_in_group_expenses_table(expense_id, updated_expense_name, updated_amount, updated_paid_by):
+    """
+    Updates an expense in the group_expenses table.
+
+    :param expense_id: ID of the expense to update.
+    :param updated_expense_name: New name for the expense.
+    :param updated_amount: New amount for the expense.
+    :param updated_paid_by: ID of the user who paid the expense.
+    :return: True if the update was successful, False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    try:
+        query = """
+            UPDATE group_expenses
+            SET expense_name = %s, amount = %s, paid_by = %s, date = %s
+            WHERE id = %s
+        """
+        params = (updated_expense_name, updated_amount, updated_paid_by, datetime.now(), expense_id)
+        cursor.execute(query, params)
+        connection.commit()
+        return cursor.rowcount > 0  # Returns True if a row was updated
+    except Exception as e:
+        print(f"Error updating expense in group_expenses table: {e}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
 
 def delete_expense_from_group_expenses_table_using_expense_id(expense_id):
     """
@@ -1781,6 +1857,116 @@ def delete_all_expense_share_from_expense_shares_table_using_user_id(user_id):
         cursor.close()
         connection.close()
 
+def update_expense_shares_and_balances(expense_id, updated_paid_by, updated_split_between, updated_amount, group_id, old_payee_user_id):
+    """
+    Updates the expense shares and balances for a given expense.
+
+    :param expense_id: ID of the expense being updated.
+    :param updated_paid_by: User ID of the updated payee.
+    :param updated_split_between: List of user IDs for the updated split.
+    :param updated_amount: Total amount of the updated expense.
+    :param group_id: ID of the group to which this expense belongs.
+    :param old_payee_user_id: User id of the old payee.
+    :return: True if successful, False otherwise.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+    try:
+        # Step 1: Fetch current shares for the expense
+        current_shares_query =  """
+                                    SELECT user_id, share_amount
+                                    FROM expense_shares
+                                    WHERE expense_id = %s
+                                """
+        cursor.execute(current_shares_query, (expense_id,))
+        current_shares = cursor.fetchall()
+
+        # Step 2: Reverse old balances in `user_balances`
+        for user_id, share_amount in current_shares:
+            if user_id == old_payee_user_id:
+                continue
+
+            # Reverse the balance changes(Cancelling out the balance)
+            reverse_query = """
+                                UPDATE user_balances
+                                SET balance = balance + %s
+                                WHERE user_id = %s AND other_user_id = %s AND group_id = %s
+                            """
+            cursor.execute(reverse_query, (share_amount, user_id, old_payee_user_id, group_id))
+            cursor.execute(reverse_query, (-share_amount, old_payee_user_id, user_id, group_id))
+
+        # Step 3: Delete current shares from `expense_shares`
+        delete_shares_query = "DELETE FROM expense_shares WHERE expense_id = %s"
+        cursor.execute(delete_shares_query, (expense_id,))
+
+        # Step 4: Calculate new shares
+        num_users = len(updated_split_between)
+        if num_users == 0:
+            raise ValueError("No users to split the expense between.")
+
+        individual_share = updated_amount / num_users
+
+        # Step 5: Insert new shares into `expense_shares`
+        insert_shares_query =   """
+                                    INSERT INTO expense_shares (
+                                        expense_id,
+                                        user_id,
+                                        share_amount,
+                                        status,
+                                        direction,
+                                        settled,
+                                        settled_date
+                                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                """
+
+        for user_id in updated_split_between:
+            direction = "owes" if user_id != updated_paid_by else "is_owed"
+            status = "pending"
+            settled = False
+            settled_date = None
+
+            cursor.execute(
+                insert_shares_query,
+                (
+                    expense_id,
+                    user_id,
+                    individual_share,
+                    status,
+                    direction,
+                    settled,
+                    settled_date
+                )
+            )
+
+        # Step 6: Apply new balances in `user_balances`
+        for user_id in updated_split_between:
+            if user_id == updated_paid_by:
+                continue
+
+            # Add the new share amount to user_id's balance towards payee
+            update_balance_query =  """
+                                        INSERT INTO user_balances (user_id, other_user_id, group_id, balance)
+                                        VALUES (%s, %s, %s, %s)
+                                        ON DUPLICATE KEY UPDATE balance = balance + VALUES(balance)
+                                    """
+            cursor.execute(update_balance_query, (updated_paid_by, user_id, group_id, individual_share))
+            # Subtract the new share amount from payee's balance towards user_id
+            cursor.execute(update_balance_query, (user_id, updated_paid_by, group_id, -individual_share))
+
+        connection.commit()
+        return True
+
+    except Exception as e:
+        print(f"Error updating expense shares and balances: {e}")
+        connection.rollback()
+        return False
+
+    finally:
+        cursor.close()
+        connection.close()
 
 # ---------------------- User balances -----------------------------
 

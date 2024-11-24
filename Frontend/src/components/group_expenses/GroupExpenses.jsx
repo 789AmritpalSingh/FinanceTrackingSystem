@@ -37,6 +37,7 @@ import {
 } from "../../redux/groupBalancesSlice";
 import { getUserBalances } from "../api_functions/group_expenses/getUserBalances";
 import { deleteExpense } from "../api_functions/group_expenses/deleteExpense";
+import { updateGroupExpense } from "../api_functions/group_expenses/updateGroupExpense";
 
 const GroupExpenses = ({ groupId, loggedInUserId }) => {
   const dispatch = useDispatch();
@@ -57,15 +58,41 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
 
   // State for managing the add expense modal and input fields
   const [addExpenseModalOpen, setAddExpenseModalOpen] = useState(false);
-  const [expenseName, setExpenseName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [paidBy, setPaidBy] = useState("");
-  const [splitBetween, setSplitBetween] = useState([]);
+  const [addExpenseName, setAddExpenseName] = useState("");
+  const [addAmount, setAddAmount] = useState("");
+  const [addPaidBy, setAddPaidBy] = useState("");
+  const [addSplitBetween, setAddSplitBetween] = useState([]);
+
+  // State for managing the update expense modal and input fields
+  const [updateExpenseModalOpen, setUpdateExpenseModalOpen] = useState(false);
+  const [updateExpenseName, setUpdateExpenseName] = useState("");
+  const [updateAmount, setUpdateAmount] = useState("");
+  const [updatePaidBy, setUpdatePaidBy] = useState("");
+  const [updateSplitBetween, setUpdateSplitBetween] = useState([]);
+  const [selectedExpense, setSelectedExpense] = useState(null);
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   // Toggle modal visibility
   const handleAddExpenseModalOpen = () => setAddExpenseModalOpen(true);
   const handleAddExpenseModalClose = () => setAddExpenseModalOpen(false);
+
+  const handleUpdateExpenseModalOpen = (expense) => {
+    // Extract user IDs from the shares array for split_between
+    const splitBetweenIds = expense.shares?.map((share) => share.user_id) || [];
+
+    setSelectedExpense(expense);
+    setUpdateExpenseName(expense.expense_name);
+    setUpdateAmount(expense.amount);
+    setUpdatePaidBy(expense.paid_by);
+    setUpdateSplitBetween(splitBetweenIds); // Use extracted user IDs for split_between
+    setUpdateExpenseModalOpen(true);
+  };
+
+  const handleUpdateExpenseModalClose = () => {
+    setSelectedExpense(null);
+    setUpdateExpenseModalOpen(false);
+  };
 
   // Fetch expenses and balances on mount
   useEffect(() => {
@@ -94,20 +121,27 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
 
   // Handle form submission to add a new expense
   const handleAddExpense = async () => {
-    if (!expenseName || !amount || !paidBy || splitBetween.length === 0) {
+    if (
+      !addExpenseName ||
+      !addAmount ||
+      !addPaidBy ||
+      addSplitBetween.length === 0
+    ) {
       dispatch(setGroupExpenseError("All fields are required."));
       return;
     }
 
     const newExpenseData = {
       group_id: parseInt(groupId),
-      expense_name: expenseName,
-      amount: parseFloat(amount),
-      paid_by: parseInt(paidBy),
-      split_between: splitBetween.map((id) => parseInt(id)),
+      expense_name: addExpenseName,
+      amount: parseFloat(addAmount),
+      paid_by: parseInt(addPaidBy),
+      split_between: addSplitBetween.map((id) => parseInt(id)),
     };
 
     const token = localStorage.getItem("token");
+
+    console.log("New expense data", newExpenseData);
 
     try {
       const data = await addNewExpenseToGroup(token, newExpenseData);
@@ -117,12 +151,57 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
       handleAddExpenseModalClose(); // Close modal on success
       setSnackbarOpen(true); // Open feedback snackbar
       // Reset fields
-      setExpenseName("");
-      setAmount("");
-      setPaidBy("");
-      setSplitBetween([]);
+      setAddExpenseName("");
+      setAddAmount("");
+      setAddPaidBy("");
+      setAddSplitBetween([]);
     } catch (error) {
       dispatch(setGroupExpenseError(error.message));
+    }
+  };
+
+  const handleUpdateExpense = async () => {
+    if (
+      !updateExpenseName ||
+      !updateAmount ||
+      !updatePaidBy ||
+      updateSplitBetween.length === 0
+    ) {
+      dispatch(setGroupExpenseError("All fields are required."));
+      return;
+    }
+
+    const updatedExpenseData = {
+      expense_name: updateExpenseName,
+      amount: parseFloat(updateAmount),
+      paid_by: parseInt(updatePaidBy),
+      split_between: updateSplitBetween.map((id) => parseInt(id)),
+    };
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const data = await updateGroupExpense(
+        token,
+        selectedExpense.id,
+        groupId,
+        updatedExpenseData
+      );
+      console.log("Data", data);
+
+      // Update Redux store
+      dispatch(setGroupExpense(data.updated_expenses));
+      dispatch(setGroupBalances(data.updated_balances));
+
+      alert(data.message); // Notify user
+      handleUpdateExpenseModalClose(); // Close modal
+      // Reset fields
+      setAddExpenseName("");
+      setAddAmount("");
+      setAddPaidBy("");
+      setAddSplitBetween([]);
+    } catch (error) {
+      alert(`Failed to update expense: ${error.message}`);
     }
   };
 
@@ -158,6 +237,19 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
     );
   };
 
+  // Calculate total balance the logged in user owes or is owed
+  const totalBalance = balances.reduce((acc, balance) => {
+    const numericBalance = parseFloat(balance.balance) || 0; // Ensure balance is a number
+    return acc + numericBalance;
+  }, 0);
+
+  const formattedTotalBalance =
+    totalBalance > 0
+      ? `You are owed $${totalBalance.toFixed(2)} in total.`
+      : totalBalance < 0
+      ? `You owe $${Math.abs(totalBalance).toFixed(2)} in total.`
+      : "Your balance is settled";
+
   return (
     <Box sx={{ padding: 4 }}>
       {/* Display Balances */}
@@ -180,6 +272,19 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
             borderRadius: 2,
           }}
         >
+          {/* Total Balance Section */}
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{
+              color: "#00e676",
+              fontWeight: "bold",
+              marginTop: 4,
+              textAlign: "center",
+            }}
+          >
+            {formattedTotalBalance}
+          </Typography>
           <List>
             {balances.length > 0 ? (
               balances.map((balance) => {
@@ -250,8 +355,27 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
                     ? "You"
                     : expense?.username || "Unknown";
 
+                // Check if the logged-in user is involved
+                const userShare = expense.shares?.find(
+                  (share) => share.user_id === loggedInUserId
+                );
+
+                let userInvolvementMessage = "You are not involved";
+                if (userShare) {
+                  const shareAmount = parseFloat(userShare.share_amount) || 0; // Ensure share_amount is a valid number
+                  if (expense.paid_by === loggedInUserId) {
+                    userInvolvementMessage = `You lent $${shareAmount.toFixed(
+                      2
+                    )}`;
+                  } else {
+                    userInvolvementMessage = `You borrowed $${shareAmount.toFixed(
+                      2
+                    )}`;
+                  }
+                }
+
                 // Check if the logged-in user is either the creator or the payee
-                const canDelete =
+                const canDeleteAndEdit =
                   loggedInUserId === creatorUserId ||
                   loggedInUserId === expense.paid_by;
 
@@ -259,26 +383,40 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
                   <React.Fragment key={expense?.id}>
                     <ListItem
                       secondaryAction={
-                        canDelete && (
-                          <Button
-                            color="error"
-                            onClick={() => {
-                              setExpenseToDelete(expense.id);
-                              setConfirmDeleteOpen(true); // Open confirmation dialog
-                            }}
-                          >
-                            Delete
-                          </Button>
+                        canDeleteAndEdit && (
+                          <>
+                            <Button
+                              color="primary"
+                              onClick={() =>
+                                handleUpdateExpenseModalOpen(expense)
+                              }
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              color="error"
+                              onClick={() => {
+                                setExpenseToDelete(expense.id);
+                                setConfirmDeleteOpen(true); // Open confirmation dialog
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </>
                         )
                       }
                     >
                       <ListItemText
                         primary={expense?.expense_name}
-                        secondary={`Amount: $${
-                          expense?.amount
-                        } - Paid by: ${displayName} - Date: ${formatDate(
-                          expense?.date
-                        )}`}
+                        secondary={
+                          <>
+                            <div>
+                              Amount: ${expense?.amount} - Paid by:{" "}
+                              {displayName} - Date: {formatDate(expense?.date)}
+                            </div>
+                            <div>{userInvolvementMessage}</div>
+                          </>
+                        }
                         sx={{ color: "white" }}
                         secondaryTypographyProps={{
                           style: { color: "#b0b0b0" }, // Light gray color for secondary text
@@ -355,8 +493,8 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
           <TextField
             label="Expense Name"
             fullWidth
-            value={expenseName}
-            onChange={(e) => setExpenseName(e.target.value)}
+            value={addExpenseName}
+            onChange={(e) => setAddExpenseName(e.target.value)}
             sx={{ marginBottom: 2 }}
           />
 
@@ -364,8 +502,8 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
             label="Amount"
             fullWidth
             type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            value={addAmount}
+            onChange={(e) => setAddAmount(e.target.value)}
             sx={{ marginBottom: 2 }}
           />
 
@@ -373,8 +511,8 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
             label="Paid By"
             select
             fullWidth
-            value={paidBy}
-            onChange={(e) => setPaidBy(e.target.value)}
+            value={addPaidBy}
+            onChange={(e) => setAddPaidBy(e.target.value)}
             sx={{ marginBottom: 2 }}
           >
             {members.map((member) => (
@@ -388,8 +526,8 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
             label="Split Between"
             select
             fullWidth
-            value={splitBetween}
-            onChange={(e) => setSplitBetween(e.target.value)}
+            value={addSplitBetween}
+            onChange={(e) => setAddSplitBetween(e.target.value)}
             SelectProps={{
               multiple: true,
             }}
@@ -409,6 +547,89 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
             fullWidth
           >
             Submit
+          </Button>
+        </Box>
+      </Modal>
+
+      {/* Update Expense Modal */}
+      <Modal
+        open={updateExpenseModalOpen}
+        onClose={handleUpdateExpenseModalClose}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            Update Expense
+          </Typography>
+
+          <TextField
+            label="Expense Name"
+            fullWidth
+            value={updateExpenseName}
+            onChange={(e) => setUpdateExpenseName(e.target.value)}
+            sx={{ marginBottom: 2 }}
+          />
+
+          <TextField
+            label="Amount"
+            fullWidth
+            type="number"
+            value={updateAmount}
+            onChange={(e) => setUpdateAmount(e.target.value)}
+            sx={{ marginBottom: 2 }}
+          />
+
+          <TextField
+            label="Paid By"
+            select
+            fullWidth
+            value={updatePaidBy}
+            onChange={(e) => setUpdatePaidBy(e.target.value)}
+            sx={{ marginBottom: 2 }}
+          >
+            {members.map((member) => (
+              <MenuItem key={member.id} value={member.user_id}>
+                {member.username === loggedInUsername ? "You" : member.username}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Split Between"
+            select
+            fullWidth
+            value={updateSplitBetween}
+            onChange={(e) => setUpdateSplitBetween(e.target.value)}
+            SelectProps={{
+              multiple: true,
+            }}
+            sx={{ marginBottom: 2 }}
+          >
+            {members.map((member) => (
+              <MenuItem key={member.id} value={member.user_id}>
+                {member.username === loggedInUsername ? "You" : member.username}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleUpdateExpense}
+            fullWidth
+          >
+            Update
           </Button>
         </Box>
       </Modal>

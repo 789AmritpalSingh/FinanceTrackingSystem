@@ -21,6 +21,9 @@ import {
   setGroups,
 } from "../../redux/groupsSlice";
 import { Link } from "react-router-dom";
+import { clearGroupMembersState } from "../../redux/groupMembersSlice";
+import { clearGroupExpensesState } from "../../redux/groupExpensesSlice";
+import { clearGroupBalancesState } from "../../redux/groupBalancesSlice";
 
 const GroupsDisplay = () => {
   const [groupName, setGroupName] = useState("");
@@ -32,13 +35,16 @@ const GroupsDisplay = () => {
 
   // Fetch groups on component load
   useEffect(() => {
-    if (groups.length === 0) {  // Only fetch if groups are empty, it can be when no groups present or when fetching data first data. This would save from unncessary fetching data from backend again and again.
+    // if (groups.length === 0) {  // Only fetch if groups are empty, it can be when no groups present or when fetching data first data. This would save from unncessary fetching data from backend again and again.
       const fetchGroups = async () => {
         dispatch(setLoading(true));
         try {
           const token = localStorage.getItem("token");
           const userGroups = await getGroupsForUser(token);
           dispatch(setGroups(userGroups));
+          dispatch(clearGroupMembersState());
+          dispatch(clearGroupExpensesState());
+          dispatch(clearGroupBalancesState());
         } catch (error) {
           dispatch(setError(error.message));
         } finally {
@@ -46,7 +52,7 @@ const GroupsDisplay = () => {
         }
       };
       fetchGroups();
-    }
+    // }
   }, [dispatch, groups.length]);
 
   // Open and close modal handlers

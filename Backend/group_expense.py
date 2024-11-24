@@ -406,6 +406,10 @@ def add_expense_to_group(custom_shares=None):
             if not share_added:
                 return jsonify({"message": f"Failed to add share for user_id {member_id}", "expense_details": []}), 500
             
+        expense_shares = db.get_expense_share_details_using_expense_id(expense_details["id"])
+
+        expense_details["shares"] = expense_shares
+            
         # Fetch updated balances after adding the expense
         updated_balances = db.get_user_balances_from_user_balances_table(user_id, group_id)
 
@@ -416,6 +420,63 @@ def add_expense_to_group(custom_shares=None):
         }), 201
     else:
         return jsonify({"message": "Failed to add expense."}), 500
+    
+@jwt_required()
+def update_group_expense(expense_id, group_id):
+    """
+        Update an expense using the expense_id and group_id.
+        :param expense_id: ID of the expense to update.
+        :param group_id: ID of the group to which the expense belongs.
+    """
+    username = get_jwt_identity()
+
+    # Parse the request payload
+    data = request.get_json()
+    updated_expense_name = data.get('expense_name')
+    updated_amount = data.get('amount')
+    updated_paid_by = data.get('paid_by')
+    updated_split_between = data.get('split_between')
+
+    # Retrieve user_id from the username
+    user_id = db.get_user_id_from_username_in_users_table(username)[0]
+
+    # Fetch creator user_id
+    creator_user_id = db.get_creator_user_id_from_group_id_in_groups_table(group_id)
+
+    # Fetch current payee user_id
+    payee_user_id = db.get_payee_user_id_from_expense_id_in_group_expenses_table(expense_id)
+
+    # Ensure only the creator or current payee can update the expense
+    if user_id != creator_user_id and user_id != payee_user_id:
+        return jsonify({"message": "You are not authorized to update this expense."}), 403
+
+    # Update logic in the database
+    try:
+        # Update expense in the group_expenses table
+        expense_updated = db.update_expense_in_group_expenses_table(
+            expense_id, updated_expense_name, updated_amount, updated_paid_by
+        )
+
+        if not expense_updated:
+            return jsonify({"message": "Failed to update the expense."}), 500
+
+        # Update expense shares and balances
+        db.update_expense_shares_and_balances(
+            expense_id, updated_paid_by, updated_split_between, updated_amount, group_id, payee_user_id
+        )
+
+        # Fetch updated expenses and balances
+        updated_expenses = db.get_all_expenses_details_for_a_particular_group_from_group_expenses_table(group_id)
+        updated_balances = db.get_user_balances_from_user_balances_table(user_id, group_id)
+
+        return jsonify({
+            "message": "Expense updated successfully.",
+            "updated_expenses": updated_expenses,
+            "updated_balances": updated_balances,
+        }), 200
+    except Exception as e:
+        print(f"Error updating expense: {e}")
+        return jsonify({"message": "Internal server error."}), 500
 
 @jwt_required()
 def get_user_balances():
