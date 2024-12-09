@@ -30,7 +30,7 @@ import {
 } from "../../redux/groupsSlice";
 import { updateGroupName } from "../api_functions/group_expenses/updateGroupName";
 import { deleteGroup } from "../api_functions/group_expenses/deleteGroup";
-import GroupMembers from "./GroupMembers"; // Import the GroupMembers component
+import GroupMembers from "./GroupMembers";
 import { getGroupsForUser } from "../api_functions/group_expenses/getGroupsForUser";
 import { removeGroupMember } from "../api_functions/group_expenses/removeGroupMember";
 import { clearGroupMembersState } from "../../redux/groupMembersSlice";
@@ -39,23 +39,30 @@ import { clearGroupBalancesState } from "../../redux/groupBalancesSlice";
 import { changeGroupCreator } from "../api_functions/group_expenses/changeGroupCreator";
 
 const GroupDetails = () => {
+  // Extract the groupId from the URL parameters
   const { groupId } = useParams();
+
+  // Hook for navigation
   const navigate = useNavigate();
+
+  // Redux hooks for managing state
   const dispatch = useDispatch();
   const group = useSelector((state) =>
     state.groups.groups.find((g) => g.id === parseInt(groupId))
   );
   const members = useSelector((state) => state.groupMembers.members);
+  const loggedInUserId = useSelector((state) => state.auth.user_id);
   const creatorUserId = group?.creator_user_id;
-  const loggedInUserId = useSelector((state) => state.auth.user_id); // Logged-in user's ID
 
-  // Find the logged-in user's member id
+  // Find the logged-in user's membership ID in the group
   const loggedInUserMemberId = members.find(
     (m) => m.user_id === loggedInUserId
   )?.id;
 
-  const loading = useSelector((state) => state.groups.loading); // Check if groups are loading
+  // Loading state from Redux
+  const loading = useSelector((state) => state.groups.loading);
 
+  // Local states for managing modals and dialogs
   const [editGroupModalOpen, setEditGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState(group?.group_name || "");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -63,7 +70,9 @@ const GroupDetails = () => {
   const [selectNewCreatorOpen, setSelectNewCreatorOpen] = useState(false);
   const [newCreatorId, setNewCreatorId] = useState("");
 
-  // Fetch groups on if redux state is empty i.e. there are no groups
+  /**
+   * Fetch groups if the Redux state is empty or group data is not loaded.
+   */
   useEffect(() => {
     const fetchGroups = async () => {
       dispatch(setLoading(true));
@@ -73,7 +82,8 @@ const GroupDetails = () => {
         dispatch(setGroups(userGroups));
       } catch (error) {
         dispatch(setError(error.message));
-        // Navigate only if no group is found
+
+        // Navigate to group expenses if group data is unavailable
         if (!group) {
           navigate("/group_expenses");
         }
@@ -87,7 +97,9 @@ const GroupDetails = () => {
     }
   }, [dispatch, group, navigate]);
 
-  // Edit group name
+  /**
+   * Handle group name update functionality.
+   */
   const handleUpdateGroupName = async () => {
     if (newGroupName.trim() === "") {
       dispatch(setError("New group name cannot be empty."));
@@ -104,7 +116,9 @@ const GroupDetails = () => {
     }
   };
 
-  // Delete group
+  /**
+   * Handle group deletion functionality.
+   */
   const handleDeleteGroup = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -116,26 +130,26 @@ const GroupDetails = () => {
     }
   };
 
+  /**
+   * Handle the functionality for leaving a group.
+   * If the user is the creator, prompt for assigning a new creator.
+   */
   const handleLeaveGroup = async (isCreatorChanged = false) => {
-
     try {
       if (loggedInUserId === creatorUserId && !isCreatorChanged) {
         if (members.length === 1) {
-          handleDeleteGroup(); // Delete the group if the creator is the only one member left.
+          handleDeleteGroup(); // Delete the group if the creator is the only member
         } else {
-          setSelectNewCreatorOpen(true); // Prompt to select a new creator.
+          setSelectNewCreatorOpen(true); // Prompt for selecting a new creator
           return;
         }
       } else {
         const token = localStorage.getItem("token");
         await removeGroupMember(token, loggedInUserMemberId, groupId);
-        // Remove the group from Redux store
         dispatch(removeGroup(groupId));
-        // Clear the expenses, balances, and group members from the Redux store of the left group
         dispatch(clearGroupBalancesState());
         dispatch(clearGroupExpensesState());
         dispatch(clearGroupMembersState());
-        // Navigate to the group expenses page
         navigate("/group_expenses");
       }
     } catch (error) {
@@ -145,36 +159,27 @@ const GroupDetails = () => {
     }
   };
 
+  /**
+   * Handle changing the creator of the group.
+   */
   const handleChangeCreator = async () => {
     try {
       const token = localStorage.getItem("token");
       await changeGroupCreator(token, groupId, newCreatorId);
-
-      // Update the group in Redux
       dispatch(
         updateGroupNameInStore({
           groupId,
           newCreatorUserId: newCreatorId,
         })
       );
-
-      // Close the modal on success
       setSelectNewCreatorOpen(false);
-
-      // Optionally notify the user about the successful update
-      // alert("Group creator changed successfully.");
-
-      // Leave the group after changing the creator
-      await handleLeaveGroup(true); // Pass a flag to avoid re-prompting
+      await handleLeaveGroup(true); // Proceed to leave the group after assigning a new creator
     } catch (error) {
       dispatch(setError(error.message));
-
-      // Optionally notify the user about the error
-      alert("Failed to change the group creator. Please try again.");
     }
   };
 
-  // Show loading spinner until group details are populated
+  // Display a loading spinner if group details are not fully loaded
   if (loading || (!group && !loading)) {
     return (
       <Box
@@ -183,35 +188,57 @@ const GroupDetails = () => {
           justifyContent: "center",
           alignItems: "center",
           height: "100vh",
+          backgroundColor: "#1A1A1A",
         }}
       >
-        <CircularProgress />
+        <CircularProgress color="primary" />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ padding: 4 }}>
+    <Box
+      sx={{
+        padding: 4,
+        backgroundColor: "#1A1A1A",
+        minHeight: "100vh",
+        color: "white",
+      }}
+    >
+      {/* Group Title and Edit/Delete Buttons */}
       <Box
-        sx={{ display: "flex", alignItems: "center", gap: 1, color: "white" }}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          backgroundColor: "#262626",
+          borderRadius: 2,
+          padding: 2,
+          boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
+        }}
       >
-        <Typography variant="h4" component="span">
+        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
           {group?.group_name}
         </Typography>
         {loggedInUserId === creatorUserId && (
           <>
             <IconButton
-              color="primary"
               onClick={() => setEditGroupModalOpen(true)}
-              sx={{ marginLeft: 2 }}
+              sx={{
+                backgroundColor: "#333333",
+                "&:hover": { backgroundColor: "#444444" },
+              }}
             >
-              <EditIcon />
+              <EditIcon sx={{ color: "#00e676" }} />
             </IconButton>
             <IconButton
-              color="secondary"
               onClick={() => setDeleteConfirmOpen(true)}
+              sx={{
+                backgroundColor: "#333333",
+                "&:hover": { backgroundColor: "#FF5252" },
+              }}
             >
-              <DeleteIcon />
+              <DeleteIcon sx={{ color: "#FF5252" }} />
             </IconButton>
           </>
         )}
@@ -223,6 +250,12 @@ const GroupDetails = () => {
           variant="contained"
           color="error"
           onClick={() => setLeaveGroupConfirmOpen(true)}
+          sx={{
+            padding: "10px 20px",
+            fontWeight: "bold",
+            backgroundColor: "#FF5252",
+            "&:hover": { backgroundColor: "#FF3030" },
+          }}
         >
           Leave Group
         </Button>
@@ -234,7 +267,7 @@ const GroupDetails = () => {
         loggedInUserId={loggedInUserId}
         creatorUserId={creatorUserId}
       />
-
+      
       {/* Modal for Editing Group Name */}
       <Modal
         open={editGroupModalOpen}

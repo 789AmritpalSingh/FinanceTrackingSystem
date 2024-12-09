@@ -44,20 +44,26 @@ import { getUserBalances } from "../api_functions/group_expenses/getUserBalances
 
 const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
   const dispatch = useDispatch();
+
+  // Redux state for group members
   const members = useSelector((state) => state.groupMembers.members);
   const loading = useSelector((state) => state.groupMembers.loading);
   const memberError = useSelector((state) => state.groupMembers.error);
   const loggedInUsername = useSelector((state) => state.auth.username);
 
+  // Local state for managing new member input and delete confirmation dialog
   const [newMemberUsername, setNewMemberUsername] = useState("");
   const [deleteMemberConfirmOpen, setDeleteMemberConfirmOpen] = useState(false);
   const [memberIdToDelete, setMemberIdToDelete] = useState(null);
 
-  // Fetch group members on the page load
+  // Fetch group members when the component loads or groupId changes
   useEffect(() => {
     fetchGroupMembers();
   }, [groupId]);
 
+  /**
+   * Fetches the members of the group from the API.
+   */
   const fetchGroupMembers = async () => {
     dispatch(setLoading(true));
     try {
@@ -71,6 +77,9 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
     }
   };
 
+  /**
+   * Re-fetches group expenses and balances.
+   */
   const refetchExpensesAndBalances = async () => {
     const token = localStorage.getItem("token");
     dispatch(setExpenseLoading(true));
@@ -90,6 +99,9 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
     }
   };
 
+  /**
+   * Adds a new member to the group.
+   */
   const handleAddNewMember = async () => {
     if (newMemberUsername.trim() === "") {
       dispatch(setMemberError("Username cannot be empty."));
@@ -111,17 +123,23 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
           group_id: parseInt(groupId),
         })
       );
-      setNewMemberUsername("");
+      setNewMemberUsername(""); // Clear the input field
     } catch (error) {
       dispatch(setMemberError(error.message));
     }
   };
 
+  /**
+   * Handles the deletion of a group member.
+   */
   const handleDeleteMember = (memberUserId) => {
     setMemberIdToDelete(memberUserId);
     setDeleteMemberConfirmOpen(true);
   };
 
+  /**
+   * Confirms the deletion of a group member and updates the state.
+   */
   const confirmDeleteMember = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -136,16 +154,26 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
 
   return (
     <Box sx={{ marginTop: 4, color: "white" }}>
-      <Typography variant="h6" gutterBottom>
+      {/* Group Members Header */}
+      <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold" }}>
         Group Members
       </Typography>
 
+      {/* Member List */}
       <Paper
         elevation={3}
-        sx={{ padding: 2, backgroundColor: "#333", borderRadius: 2 }}
+        sx={{
+          padding: 2,
+          backgroundColor: "#262626",
+          borderRadius: 3,
+          boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
+        }}
       >
         {loading ? (
-          <Typography variant="body1" sx={{ color: "white" }}>
+          <Typography
+            variant="body1"
+            sx={{ color: "white", textAlign: "center" }}
+          >
             Loading...
           </Typography>
         ) : (
@@ -154,15 +182,16 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
               <React.Fragment key={member.id}>
                 <ListItem
                   secondaryAction={
-                    // Show delete button only if the logged-in user is the group creator
                     loggedInUserId === creatorUserId && (
                       <IconButton
                         edge="end"
-                        color="secondary"
                         onClick={() => handleDeleteMember(member.id)}
-                        aria-label="delete member"
+                        sx={{
+                          backgroundColor: "#333",
+                          "&:hover": { backgroundColor: "#FF5252" },
+                        }}
                       >
-                        <DeleteIcon />
+                        <DeleteIcon sx={{ color: "#FF5252" }} />
                       </IconButton>
                     )
                   }
@@ -176,7 +205,7 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
                     sx={{ color: "white" }}
                   />
                 </ListItem>
-                <Divider sx={{ backgroundColor: "#555" }} />
+                <Divider sx={{ backgroundColor: "#444" }} />
               </React.Fragment>
             ))}
           </List>
@@ -189,34 +218,64 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
       </Paper>
 
       {/* Add New Member Section */}
-      <Box sx={{ display: "flex", gap: 2, alignItems: "center", marginTop: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          alignItems: "center",
+          marginTop: 3,
+          flexDirection: { xs: "column", sm: "row" },
+        }}
+      >
         <TextField
           label="Add New Member"
           variant="outlined"
           value={newMemberUsername}
           onChange={(e) => setNewMemberUsername(e.target.value)}
+          fullWidth
           sx={{
-            flexGrow: 1,
-            backgroundColor: "#444",
-            color: "white",
+            backgroundColor: "#333",
             borderRadius: 1,
+            "& .MuiOutlinedInput-root": {
+              color: "white",
+              "& fieldset": {
+                borderColor: "#555",
+              },
+              "&:hover fieldset": {
+                borderColor: "#00e676",
+              },
+            },
+            "& .MuiInputLabel-root": { color: "#ccc" },
           }}
-          InputLabelProps={{ style: { color: "#ccc" } }}
-          InputProps={{ style: { color: "white" } }}
         />
         <Button
           variant="contained"
-          color="primary"
           onClick={handleAddNewMember}
+          sx={{
+            background: "linear-gradient(135deg, #00e676, #00b258)",
+            color: "white",
+            fontWeight: "bold",
+            textTransform: "capitalize",
+            borderRadius: "8px",
+            padding: "6px 16px", // Reduced padding for decreased height
+            fontSize: "0.9rem", // Slightly smaller font size
+            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+            transition: "transform 0.2s, box-shadow 0.2s",
+            "&:hover": {
+              transform: "scale(1.05)",
+              boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.3)",
+              background: "linear-gradient(135deg, #00c867, #009c3c)",
+            },
+          }}
         >
           Add Member
         </Button>
       </Box>
 
-      {/* Render Group Expenses */}
-      <GroupExpenses groupId={groupId} loggedInUserId={loggedInUserId}/>
+      {/* Group Expenses */}
+      <GroupExpenses groupId={groupId} loggedInUserId={loggedInUserId} />
 
-      {/* Confirmation Dialog for Deleting Group Member */}
+      {/* Confirmation Dialog for Deleting Member */}
       <Dialog
         open={deleteMemberConfirmOpen}
         onClose={() => setDeleteMemberConfirmOpen(false)}
@@ -234,7 +293,7 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
           >
             Cancel
           </Button>
-          <Button onClick={confirmDeleteMember} color="secondary">
+          <Button onClick={confirmDeleteMember} color="error">
             Delete
           </Button>
         </DialogActions>
