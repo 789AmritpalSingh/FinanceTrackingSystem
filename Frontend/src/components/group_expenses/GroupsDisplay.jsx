@@ -5,14 +5,12 @@ import {
   Button,
   TextField,
   Modal,
-  IconButton,
   Card,
   CardContent,
   CardActions,
   CircularProgress,
   Avatar,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import GroupIcon from "@mui/icons-material/Group";
 import { createGroup } from "../api_functions/group_expenses/createGroup";
@@ -28,12 +26,14 @@ import { Link } from "react-router-dom";
 import { clearGroupMembersState } from "../../redux/groupMembersSlice";
 import { clearGroupExpensesState } from "../../redux/groupExpensesSlice";
 import { clearGroupBalancesState } from "../../redux/groupBalancesSlice";
+import Grid from "@mui/material/Grid2";
 
 const GroupsDisplay = () => {
   const [groupName, setGroupName] = useState("");
   const [groupCreationModalOpen, setGroupCreationModalOpen] = useState(false);
   const dispatch = useDispatch();
   const { groups, loading, error } = useSelector((state) => state.groups);
+  const loggedInUserName = useSelector((state) => state.auth.username);
 
   // Fetch groups on component load
   useEffect(() => {
@@ -76,6 +76,7 @@ const GroupsDisplay = () => {
         id: newGroupResponse.data.id,
         group_name: newGroupResponse.data.group_name,
         creator_user_id: newGroupResponse.data.creator_user_id,
+        creater_user_name: newGroupResponse.data.creater_user_name,
       };
       dispatch(addGroup(newGroup)); // Add the new group with both ID and name
       handleGroupCreationModalClose(); // Close the modal on success
@@ -88,140 +89,114 @@ const GroupsDisplay = () => {
     <Box
       sx={{
         padding: 4,
-        backgroundColor: "#1A1A1A",
+        backgroundColor: "#121212",
         minHeight: "100vh",
         color: "white",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        gap: 4,
+        width: "100%", // Expands to full width
       }}
     >
       {/* Header */}
-      <Typography
-        variant="h4"
-        gutterBottom
+      {/* <Typography
+        variant="h3"
         sx={{
           fontWeight: "bold",
           textTransform: "uppercase",
           color: "#00e676",
-          marginBottom: 3,
-          textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
+          textShadow: "0 2px 4px rgba(0,0,0,0.4)",
         }}
       >
         Group Expenses
-      </Typography>
+      </Typography> */}
 
-      {/* Create Group Section */}
+      {/* Header with Your Groups and Create Group Button */}
       <Box
         sx={{
-          width: "100%",
-          maxWidth: "800px",
-          marginBottom: 4,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          width: "100%", // Covers the full width
+          paddingX: { xs: 2, md: 4 }, // Adds responsive horizontal padding
+          marginBottom: 4, // Space between header and list
         }}
       >
-        <Card
+        <Typography
+          variant="h3"
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: 3,
-            background: "linear-gradient(135deg, #262626, #333333)",
-            borderRadius: "16px",
-            boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
-            transition: "transform 0.3s, box-shadow 0.3s",
-            "&:hover": {
-              transform: "scale(1.02)",
-              boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.6)",
-            },
+            fontWeight: "bold",
+            color: "#00e676",
           }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              textAlign: { xs: "center", md: "left" },
-              marginBottom: { xs: 2, md: 0 },
-            }}
-          >
-            <AddCircleOutlineIcon
-              sx={{
-                fontSize: "2rem",
-                color: "#00e676",
-              }}
-            />
-            <Typography
-              variant="h6"
-              sx={{
-                color: "#FFFFFF",
-                fontWeight: "500",
-              }}
-            >
-              Create a New Group
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            onClick={handleGroupCreationModalOpen}
-            sx={{
-              backgroundColor: "#00e676",
-              color: "#1A1A1A",
-              fontWeight: "bold",
-              padding: { xs: "6px 12px", md: "8px 16px" }, // Adjust button size
-              fontSize: { xs: "0.8rem", md: "1rem" }, // Adjust font size
-              textTransform: "none",
-              "&:hover": {
-                backgroundColor: "#00b258",
-              },
-            }}
-          >
-            Add Group
-          </Button>
-        </Card>
+          Your Groups
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddCircleOutlineIcon />}
+          onClick={handleGroupCreationModalOpen}
+          sx={{
+            minWidth: { xs: "100%", sm: "150px" }, // Button width is responsive
+            bgcolor: "#089404", // Button color to match the focus border color
+            "&:hover": {
+              bgcolor: "#008000", // Darker shade for hover
+            },
+            borderRadius: "20px", // Add border radius here
+            fontSize: { xs: "14px", md: "16px" }, // Responsive font size
+            fontWeight: "bold",
+            color: "white",
+            height: { xs: "40px", md: "50px" }, // Adjust height for smaller screens
+          }}
+        >
+          Create New Group
+        </Button>
       </Box>
 
       {/* Groups List */}
       <Box
         sx={{
-          width: "100%",
-          maxWidth: "800px",
+          width: "100%", // Covers the full width
+          paddingX: { xs: 2, md: 4 }, // Adds responsive horizontal padding
         }}
       >
         {loading ? (
           <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "200px",
-            }}
+            sx={{ display: "flex", justifyContent: "center", height: "200px" }}
           >
             <CircularProgress color="success" />
           </Box>
         ) : groups.length > 0 ? (
           <Grid container spacing={3}>
             {groups.map((group) => (
-              <Grid size={{ xs: 12, md: 6 }} key={group.id}>
+              <Grid size={{xs: 12, sm: 6, md: 3}} key={group.id}>
                 <Card
                   sx={{
-                    background: "linear-gradient(135deg, #262626, #333333)",
-                    color: "#FFFFFF",
-                    borderRadius: "16px",
-                    boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
-                    transition: "transform 0.3s",
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                    },
+                    background: "#1f1f1f",
+                    color: "#fff",
+                    borderRadius: 2,
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+                    "&:hover": { transform: "scale(1.05)" },
+                    height: "250px", // Fixed height for uniform size
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: 2, // Consistent padding
                   }}
                 >
-                  <CardContent sx={{ display: "flex", alignItems: "center" }}>
+                  {/* Top Section with Avatar */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 2,
+                    }}
+                  >
                     <Avatar
                       sx={{
                         backgroundColor: "#00e676",
-                        marginRight: 2,
-                        width: 40,
-                        height: 40,
+                        width: 48,
+                        height: 48,
                       }}
                     >
                       <GroupIcon />
@@ -229,23 +204,67 @@ const GroupsDisplay = () => {
                     <Typography
                       variant="h6"
                       sx={{
-                        fontWeight: "500",
+                        fontWeight: "bold",
+                        color: "#fff",
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        maxWidth: "70%", // Prevents the name from taking too much space
                       }}
                     >
                       {group.group_name}
                     </Typography>
-                  </CardContent>
-                  <CardActions>
+                  </Box>
+
+                  {/* Middle Section with Creator Info */}
+                  <Box
+                    sx={{
+                      flexGrow: 1, // Fills remaining space
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      marginBottom: 2,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontStyle: "italic",
+                        color: "#aaa", // Light grey for label
+                        marginBottom: 0.5,
+                      }}
+                    >
+                      Created by:
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: "bold",
+                        color: "#00FFFF", // Highlight for creator's name
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        maxWidth: "100%", // Ensures text doesn't exceed container
+                      }}
+                    >
+                      {loggedInUserName === group.creator_user_name ? "You" : group.creator_user_name}
+                    </Typography>
+                  </Box>
+
+                  {/* Bottom Section with Actions */}
+                  <CardActions
+                    sx={{
+                      padding: 0,
+                      justifyContent: "center",
+                    }}
+                  >
                     <Button
                       component={Link}
                       to={`/group_expenses/${group.id}`}
                       sx={{
                         color: "#00e676",
-                        textTransform: "none",
                         fontWeight: "bold",
-                        "&:hover": {
-                          textDecoration: "underline",
-                        },
+                        "&:hover": { textDecoration: "underline" },
                       }}
                     >
                       View Group
@@ -256,35 +275,9 @@ const GroupsDisplay = () => {
             ))}
           </Grid>
         ) : (
-          <Box
-            sx={{
-              textAlign: "center",
-              padding: 4,
-              backgroundColor: "#262626",
-              borderRadius: "16px",
-              boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
-              marginTop: 3,
-            }}
-          >
-            <Typography variant="h6" sx={{ marginBottom: 2 }}>
-              You are not part of any groups yet.
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={handleGroupCreationModalOpen}
-              startIcon={<AddCircleOutlineIcon />}
-              sx={{
-                backgroundColor: "#00e676",
-                color: "#1A1A1A",
-                fontWeight: "bold",
-                "&:hover": {
-                  backgroundColor: "#00b258",
-                },
-              }}
-            >
-              Create a Group
-            </Button>
-          </Box>
+          <Typography variant="body1" sx={{ textAlign: "center" }}>
+            No groups available. Create your first group!
+          </Typography>
         )}
       </Box>
 
@@ -299,22 +292,21 @@ const GroupsDisplay = () => {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "90%",
-            maxWidth: 400,
-            bgcolor: "#262626",
-            color: "#FFFFFF",
+            width: { xs: "90%", sm: 400 }, // Responsive width
+            bgcolor: "#2C2C2C", // Updated background color
+            color: "#DDD", // Light grey text color
             boxShadow: 24,
-            p: 4,
-            borderRadius: "16px",
+            border: "1px solid #333", // Subtle border
+            borderRadius: 2, // Rounded corners
+            p: { xs: 2, sm: 4 }, // Responsive padding
           }}
         >
           <Typography
             variant="h6"
             sx={{
-              fontWeight: "bold",
-              marginBottom: 2,
               textAlign: "center",
-              color: "#00e676",
+              marginBottom: 2,
+              color: "#00e676", // Highlighted title color
             }}
           >
             Create a New Group
@@ -325,20 +317,24 @@ const GroupsDisplay = () => {
             fullWidth
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
+            InputLabelProps={{
+              style: { color: "#AAA" }, // Light grey labels
+            }}
+            inputProps={{
+              style: { color: "#DDD" }, // Light grey input text
+            }}
             sx={{
               marginBottom: 2,
               "& .MuiOutlinedInput-root": {
-                backgroundColor: "#333333",
-                color: "#FFFFFF",
                 "& fieldset": {
-                  borderColor: "#00e676",
+                  borderColor: "#555", // Grey border for input fields
                 },
                 "&:hover fieldset": {
-                  borderColor: "#00b258",
+                  borderColor: "#777", // Lighter grey on hover
                 },
-              },
-              "& .MuiInputLabel-root": {
-                color: "#AAAAAA",
+                "&.Mui-focused fieldset": {
+                  borderColor: "#00e676", // Highlight color when field is focused
+                },
               },
             }}
           />
@@ -347,11 +343,10 @@ const GroupsDisplay = () => {
             fullWidth
             onClick={handleCreateGroup}
             sx={{
-              backgroundColor: "#00e676",
-              color: "#1A1A1A",
-              fontWeight: "bold",
+              mt: 2,
+              bgcolor: "#089404", // Button color matching the focus border
               "&:hover": {
-                backgroundColor: "#00b258",
+                bgcolor: "#008000", // Darker shade for hover
               },
             }}
           >

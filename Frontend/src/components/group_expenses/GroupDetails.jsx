@@ -205,11 +205,12 @@ const GroupDetails = () => {
         color: "white",
       }}
     >
-      {/* Group Title and Edit/Delete Buttons */}
+      {/* Group Header with Title and Actions */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
           gap: 2,
           backgroundColor: "#262626",
           borderRadius: 2,
@@ -217,48 +218,60 @@ const GroupDetails = () => {
           boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-          {group?.group_name}
-        </Typography>
-        {loggedInUserId === creatorUserId && (
-          <>
-            <IconButton
-              onClick={() => setEditGroupModalOpen(true)}
-              sx={{
-                backgroundColor: "#333333",
-                "&:hover": { backgroundColor: "#444444" },
-              }}
-            >
-              <EditIcon sx={{ color: "#00e676" }} />
-            </IconButton>
-            <IconButton
-              onClick={() => setDeleteConfirmOpen(true)}
-              sx={{
-                backgroundColor: "#333333",
-                "&:hover": { backgroundColor: "#FF5252" },
-              }}
-            >
-              <DeleteIcon sx={{ color: "#FF5252" }} />
-            </IconButton>
-          </>
-        )}
-      </Box>
-
-      {/* Leave Group Button */}
-      <Box sx={{ marginTop: 3 }}>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={() => setLeaveGroupConfirmOpen(true)}
+        {/* Group Name */}
+        <Typography
+          variant="h4"
           sx={{
-            padding: "10px 20px",
             fontWeight: "bold",
-            backgroundColor: "#FF5252",
-            "&:hover": { backgroundColor: "#FF3030" },
+            color: "#FFF",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
-          Leave Group
-        </Button>
+          {group?.group_name}
+        </Typography>
+
+        {/* Actions: Edit, Delete, Leave */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* Update and Delete Buttons for Group Creator */}
+          {loggedInUserId === creatorUserId && (
+            <>
+              <IconButton
+                onClick={() => setEditGroupModalOpen(true)}
+                sx={{
+                  backgroundColor: "#333333",
+                  "&:hover": { backgroundColor: "#444444" },
+                }}
+              >
+                <EditIcon sx={{ color: "#00e676" }} />
+              </IconButton>
+              <IconButton
+                onClick={() => setDeleteConfirmOpen(true)}
+                sx={{
+                  backgroundColor: "#333333",
+                  "&:hover": { backgroundColor: "#FF5252" },
+                }}
+              >
+                <DeleteIcon sx={{ color: "#FF5252" }} />
+              </IconButton>
+            </>
+          )}
+
+          {/* Leave Group Button */}
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => setLeaveGroupConfirmOpen(true)}
+            sx={{
+              fontWeight: "bold",
+              backgroundColor: "#FF5252",
+              "&:hover": { backgroundColor: "#FF3030" },
+            }}
+          >
+            Leave Group
+          </Button>
+        </Box>
       </Box>
 
       {/* Render Group Members */}
@@ -267,7 +280,7 @@ const GroupDetails = () => {
         loggedInUserId={loggedInUserId}
         creatorUserId={creatorUserId}
       />
-      
+
       {/* Modal for Editing Group Name */}
       <Modal
         open={editGroupModalOpen}
@@ -311,19 +324,32 @@ const GroupDetails = () => {
       <Dialog
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
+        PaperProps={{
+          style: {
+            backgroundColor: "#2C2C2C", // Dark background
+            color: "#DDD", // Light text color
+          },
+        }}
       >
-        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogTitle sx={{ color: "#FFF" }}>Confirm Deletion</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ color: "#AAA" }}>
             Are you sure you want to delete this group? This action cannot be
             undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)} color="primary">
+          <Button
+            onClick={() => setDeleteConfirmOpen(false)}
+            sx={{ color: "#00e676" }}
+          >
             Cancel
           </Button>
-          <Button onClick={handleDeleteGroup} color="secondary">
+          <Button
+            onClick={handleDeleteGroup}
+            sx={{ color: "#ff1744" }}
+            autoFocus
+          >
             Delete
           </Button>
         </DialogActions>
@@ -333,10 +359,16 @@ const GroupDetails = () => {
       <Dialog
         open={leaveGroupConfirmOpen}
         onClose={() => setLeaveGroupConfirmOpen(false)}
+        PaperProps={{
+          style: {
+            backgroundColor: "#2C2C2C", // Dark background
+            color: "#DDD", // Light text color
+          },
+        }}
       >
-        <DialogTitle>Confirm Leave Group</DialogTitle>
+        <DialogTitle sx={{ color: "#FFF" }}>Confirm Leave Group</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ color: "#AAA" }}>
             Are you sure you want to leave this group? This action cannot be
             undone.
           </DialogContentText>
@@ -344,33 +376,61 @@ const GroupDetails = () => {
         <DialogActions>
           <Button
             onClick={() => setLeaveGroupConfirmOpen(false)}
-            color="primary"
+            sx={{ color: "#00e676" }}
           >
             Cancel
           </Button>
-          <Button onClick={() => handleLeaveGroup(false)} color="error">
+          <Button
+            onClick={() => handleLeaveGroup(false)}
+            sx={{ color: "#ff1744" }}
+            autoFocus
+          >
             Leave Group
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Dialogue for changing the group creator */}
+      {/* Dialogue for Changing the Group Creator */}
       <Dialog
         open={selectNewCreatorOpen}
         onClose={() => setSelectNewCreatorOpen(false)}
+        PaperProps={{
+          style: {
+            backgroundColor: "#2C2C2C", // Dark background
+            color: "#DDD", // Light text color
+          },
+        }}
       >
-        <DialogTitle>Select New Group Creator</DialogTitle>
+        <DialogTitle sx={{ color: "#FFF" }}>
+          Select New Group Creator
+        </DialogTitle>
         <DialogContent>
           <FormControl fullWidth>
-            <InputLabel>Select Member</InputLabel>
+            <InputLabel sx={{ color: "white" }}>Select Member</InputLabel>
             <Select
               value={newCreatorId}
               onChange={(e) => setNewCreatorId(e.target.value)}
+              sx={{
+                color: "#DDD", // Light input text
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#555", // Grey border
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#777", // Lighter grey on hover
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#00e676", // Highlight on focus
+                },
+              }}
             >
               {members
                 .filter((m) => m.user_id !== loggedInUserId)
                 .map((member) => (
-                  <MenuItem key={member.user_id} value={member.user_id}>
+                  <MenuItem
+                    key={member.user_id}
+                    value={member.user_id}
+                    sx={{ color: "#DDD" }}
+                  >
                     {member.username}
                   </MenuItem>
                 ))}
@@ -380,11 +440,15 @@ const GroupDetails = () => {
         <DialogActions>
           <Button
             onClick={() => setSelectNewCreatorOpen(false)}
-            color="primary"
+            sx={{ color: "#00e676" }}
           >
             Cancel
           </Button>
-          <Button onClick={handleChangeCreator} color="primary">
+          <Button
+            onClick={handleChangeCreator}
+            sx={{ color: "#00e676" }}
+            autoFocus
+          >
             Change Creator
           </Button>
         </DialogActions>

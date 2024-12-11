@@ -453,7 +453,18 @@ def add_new_group_to_groups_table(group_name, creator_user_id):
         connection.commit()
 
         # Fetch the full row details of the newly inserted group
-        select_query = "SELECT * FROM `groups` WHERE id = LAST_INSERT_ID()"
+        select_query = """  SELECT 
+                            g.id,
+                            g.group_name,
+                            g.creator_user_id,
+                            u.username AS creator_username
+                            FROM 
+                            `groups` g
+                            JOIN 
+                            users u ON g.creator_user_id = u.id
+                            WHERE 
+                            g.id = LAST_INSERT_ID()
+                        """
         cursor.execute(select_query)
         new_group = cursor.fetchone()  # Get the full row details as a dictionary
 
@@ -918,10 +929,19 @@ def get_groups_details_for_user(user_id):
 
     try:
         query = """
-                    SELECT g.id, g.group_name, g.creator_user_id
-                    FROM `groups` g
-                    JOIN group_members gm ON g.id = gm.group_id
-                    WHERE gm.user_id = %s 
+                    SELECT 
+                        g.id,
+                        g.group_name,
+                        g.creator_user_id,
+                        u.username AS creator_user_name
+                    FROM 
+                        `groups` g
+                    JOIN 
+                        group_members gm ON g.id = gm.group_id
+                    JOIN 
+                        users u ON g.creator_user_id = u.id
+                    WHERE 
+                        gm.user_id = %s;
                 """
         cursor.execute(query, (user_id,))
         group_names = cursor.fetchall()
