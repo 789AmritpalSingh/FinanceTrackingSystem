@@ -200,7 +200,7 @@ const GroupDetails = () => {
     <Box
       sx={{
         padding: 4,
-        backgroundColor: "#1A1A1A",
+        backgroundColor: "#121212",
         minHeight: "100vh",
         color: "white",
       }}
@@ -212,8 +212,8 @@ const GroupDetails = () => {
           alignItems: "center",
           justifyContent: "space-between",
           gap: 2,
-          backgroundColor: "#262626",
           borderRadius: 2,
+          backgroundColor: "#1E1E1E",
           padding: 2,
           boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
         }}
@@ -285,6 +285,8 @@ const GroupDetails = () => {
       <Modal
         open={editGroupModalOpen}
         onClose={() => setEditGroupModalOpen(false)}
+        aria-labelledby="edit-group-name-modal"
+        aria-describedby="modal-for-updating-group-name"
       >
         <Box
           sx={{
@@ -292,26 +294,54 @@ const GroupDetails = () => {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 400,
-            bgcolor: "background.paper",
+            width: { xs: '90%', sm: 400 }, // Responsive width (90% for mobile, 400px for larger screens)
+            bgcolor: "#2C2C2C",
+            color: "#DDD",
             boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
+            border: "1px solid #333", // Subtle border matching dark theme
+            borderRadius: 2, // Slight border radius
+            p: { xs: 2, sm: 4 }, // Responsive padding
           }}
         >
-          <Typography variant="h6" gutterBottom>
+          <Typography id="add-expense-modal" variant="h6" component="h2">
             Edit Group Name
           </Typography>
           <TextField
             label="New Group Name"
             fullWidth
+            variant="outlined"
+            margin="normal"
             value={newGroupName}
             onChange={(e) => setNewGroupName(e.target.value)}
-            sx={{ marginBottom: 2 }}
-          />
+            InputLabelProps={{
+              style: { color: "#AAA" },
+            }}
+            inputProps={{
+              style: { color: "#DDD" },
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: "#555",
+                },
+                "&:hover fieldset": {
+                  borderColor: "#777",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#00e676",
+                },
+              },
+            }} />
           <Button
             variant="contained"
-            color="primary"
+            sx={{
+              mt: 2,
+              width: "100%", // Full width button on smaller screens
+              bgcolor: "#089404", // Button color to match the focus border color
+              "&:hover": {
+                bgcolor: "#008000", // Darker shade for hover
+              },
+            }}
             onClick={handleUpdateGroupName}
             fullWidth
           >
@@ -422,6 +452,15 @@ const GroupDetails = () => {
                   borderColor: "#00e676", // Highlight on focus
                 },
               }}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    backgroundColor: "#333", // Dark background for the dropdown
+                    color: "#FFF", // White text color for dropdown items
+                  },
+                },
+                getContentAnchorEl: null, // Ensures the dropdown is not misplaced
+              }}
             >
               {members
                 .filter((m) => m.user_id !== loggedInUserId)
@@ -429,7 +468,13 @@ const GroupDetails = () => {
                   <MenuItem
                     key={member.user_id}
                     value={member.user_id}
-                    sx={{ color: "#DDD" }}
+                    sx={{
+                      color: "#DDD", // Ensure text is visible against the dark menu background
+                      backgroundColor: "#333", // Dark background for each item
+                      '&:hover': {
+                        backgroundColor: "#555", // Lighter on hover
+                      }
+                    }}
                   >
                     {member.username}
                   </MenuItem>
@@ -453,6 +498,7 @@ const GroupDetails = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
     </Box>
   );
 };

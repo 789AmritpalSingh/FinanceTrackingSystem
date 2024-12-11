@@ -163,6 +163,7 @@ const AddExpenseModal = ({
             },
           }}
           onClick={handleAddExpense}
+          fullWidth
         >
           Add Expense
         </Button>

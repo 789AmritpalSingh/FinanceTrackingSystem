@@ -99,18 +99,6 @@ const GroupsDisplay = () => {
         width: "100%", // Expands to full width
       }}
     >
-      {/* Header */}
-      {/* <Typography
-        variant="h3"
-        sx={{
-          fontWeight: "bold",
-          textTransform: "uppercase",
-          color: "#00e676",
-          textShadow: "0 2px 4px rgba(0,0,0,0.4)",
-        }}
-      >
-        Group Expenses
-      </Typography> */}
 
       {/* Header with Your Groups and Create Group Button */}
       <Box

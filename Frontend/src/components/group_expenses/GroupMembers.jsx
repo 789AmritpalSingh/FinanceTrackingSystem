@@ -15,6 +15,8 @@ import {
   DialogActions,
   Divider,
   Paper,
+  ListItemAvatar,
+  Avatar,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import GroupIcon from "@mui/icons-material/Group";
@@ -118,7 +120,7 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
           flexDirection: "column",
           gap: 3,
           padding: 2,
-          backgroundColor: "#1A1A1A",
+          backgroundColor: "#1E1E1E",
           borderRadius: "8px",
           boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
         }}
@@ -131,7 +133,7 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
           }}
         >
           <Typography
-            variant="h5"
+            variant="h6"
             sx={{
               fontWeight: "bold",
               display: "flex",
@@ -146,30 +148,24 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
           <Button
             variant="contained"
             sx={{
-              backgroundColor: "#00e676",
-              "&:hover": { backgroundColor: "#00b258" },
+              backgroundColor: "#089404",
+              "&:hover": { backgroundColor: "#008000" },
               fontWeight: "bold",
             }}
             onClick={() => setViewMembers(true)}
           >
-            Manage Members
+            See Members
           </Button>
         </Box>
       </Box>
 
       {viewMembers && (
         <>
-          {/* Group Members View */}
-          <Typography
-            variant="h5"
-            sx={{ fontWeight: "bold", marginBottom: 2, color: "#00e676" }}
-          >
-            Group Members
-          </Typography>
           <Paper
             elevation={3}
             sx={{
               padding: 2,
+              mt: 2,
               backgroundColor: "#262626",
               borderRadius: 3,
               boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
@@ -185,7 +181,7 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
                   <React.Fragment key={member.id}>
                     <ListItem
                       secondaryAction={
-                        loggedInUserId === creatorUserId && (
+                        loggedInUserId === creatorUserId && loggedInUsername !== member.username && (
                           <IconButton
                             edge="end"
                             onClick={() => handleDeleteMember(member.id)}
@@ -199,12 +195,22 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
                         )
                       }
                     >
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: "#777", color: "#fff" }}>
+                          {member.username[0].toUpperCase()}
+                        </Avatar>
+                      </ListItemAvatar>
                       <ListItemText
                         primary={
                           member.username === loggedInUsername
                             ? "You"
                             : member.username
                         }
+                        primaryTypographyProps={{
+                          fontWeight: 'bold',
+                          color: '#F0DB4F', // A vibrant golden-yellow for great visibility
+                          fontSize: '1rem' // Adjust the size according to your needs
+                        }}
                         sx={{ color: "white" }}
                       />
                     </ListItem>
@@ -219,8 +225,8 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
               variant="contained"
               onClick={() => setAddMemberModalOpen(true)}
               sx={{
-                backgroundColor: "#00e676",
-                "&:hover": { backgroundColor: "#00b258" },
+                backgroundColor: "#089404",
+                "&:hover": { backgroundColor: "#008000" },
                 fontWeight: "bold",
               }}
             >
@@ -237,28 +243,8 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
         </>
       )}
 
-      {/* Group Expenses Box */}
-      <Box
-        sx={{
-          marginTop: 4,
-          padding: 2,
-          backgroundColor: "#262626",
-          borderRadius: "8px",
-          boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
-        }}
-      >
-        <Typography
-          variant="h5"
-          sx={{
-            color: "#FFF",
-            marginBottom: 1,
-            fontWeight: "bold",
-          }}
-        >
-          Group Expenses
-        </Typography>
-        <GroupExpenses groupId={groupId} loggedInUserId={loggedInUserId} />
-      </Box>
+
+      <GroupExpenses groupId={groupId} loggedInUserId={loggedInUserId} />
 
       {/* Add Member Modal */}
       <Dialog
@@ -297,12 +283,12 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
             fullWidth
             onClick={handleAddNewMember}
             sx={{
-              background: "linear-gradient(135deg, #00e676, #00b258)",
+              background: "#089404",
               color: "white",
               fontWeight: "bold",
               borderRadius: "8px",
               "&:hover": {
-                background: "linear-gradient(135deg, #00c867, #009c3c)",
+                background: "#008000",
               },
             }}
           >
@@ -310,6 +296,41 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
           </Button>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        open={deleteMemberConfirmOpen}
+        onClose={() => setDeleteMemberConfirmOpen(false)}
+        PaperProps={{
+          style: {
+            backgroundColor: "#2C2C2C",
+            color: "#DDD",
+            borderRadius: "12px",
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "#FFF" }}>Confirm Member Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: "#AAA" }}>
+            Are you sure you want to remove this member from the group?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setDeleteMemberConfirmOpen(false)}
+            sx={{ color: "#00e676" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmDeleteMember}
+            sx={{ color: "#ff1744" }}
+            autoFocus
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 };
