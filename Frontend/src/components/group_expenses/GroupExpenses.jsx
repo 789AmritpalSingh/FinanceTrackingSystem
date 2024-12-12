@@ -23,7 +23,8 @@ import {
   Avatar,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance'; // Importing the AccountBalance icon
+import ReceiptIcon from '@mui/icons-material/Receipt'; // Importing the Receipt icon
 import { addNewExpenseToGroup } from "../api_functions/group_expenses/addNewExpenseToGroup";
 import {
   addGroupExpense,
@@ -150,7 +151,6 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
       const data = await addNewExpenseToGroup(token, newExpenseData);
       dispatch(addGroupExpense(data.expense_details));
       dispatch(setGroupBalances(data.updated_balances));
-      alert(data.message); // Notify user on success
       handleAddExpenseModalClose(); // Close modal on success
       setSnackbarOpen(true); // Open feedback snackbar
       // Reset fields
@@ -196,7 +196,6 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
       dispatch(setGroupExpense(data.updated_expenses));
       dispatch(setGroupBalances(data.updated_balances));
 
-      alert(data.message); // Notify user
       handleUpdateExpenseModalClose(); // Close modal
       // Reset fields
       setAddExpenseName("");
@@ -223,8 +222,6 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
       dispatch(removeGroupExpense(expenseToDelete));
       dispatch(setGroupBalances(updated_balances));
 
-      // Notify success
-      alert(message);
     } catch (error) {
       alert(`Failed to delete expense: ${error.message}`);
     } finally {
@@ -254,41 +251,56 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
         : "Your balance is settled";
 
   return (
-    <Box sx={{ padding: 4, bgcolor: '#1E1E1E', color: '#FFF', marginTop: 4, borderRadius: '12px' }}>
+    <Box sx={{
+      padding: 4, bgcolor: '#1E1E1E', color: '#FFF', marginTop: 4, borderRadius: '12px', overflowY: 'auto',
+      maxHeight: '65vh'
+    }}>
       {/* Display Balances */}
-      <Box sx={{ display: 'flex', mb: 4 }}>
-        <Avatar sx={{ bgcolor: '#4CAF50', width: 36, height: 36, mr: 2 }}> {/* marginRight added for spacing */}
-          <GroupAddIcon sx={{ color: '#FFF' }} />
-        </Avatar>
-        <Typography variant="h5" sx={{ color: "#4CAF50", fontWeight: "bold" }}>
-          Group Expense Summary
-        </Typography>
-      </Box>
-      {balancesLoading ? (
+      {balances.length !== 0 && ( 
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Avatar sx={{ bgcolor: '#4CAF50', width: 36, height: 36, mr: 2 }}>
+            <AccountBalanceIcon sx={{ color: '#FFF' }} />
+          </Avatar>
+          <Typography variant="h5" sx={{ color: "#4CAF50", fontWeight: "bold" }}>
+            Balances
+          </Typography>
+        </Box>
+      </Box>)}
+
+      {balancesLoading || loading ? (
         <CircularProgress sx={{ display: "block", margin: "20px auto", color: '#4CAF50' }} />
+      ) : balances.length === 0 && expenses.length === 0 ? (
+        <Typography
+          align="center"
+          sx={{
+            mt: 4,
+            color: "lightgray",
+            fontSize: { xs: "1rem", md: "1.5rem" }, // Responsive font size
+            fontWeight: "bold", // Make the text bold
+          }}
+        >
+          This group does not record any expense yet. Be the first one to add an expense in this group!!
+        </Typography>
       ) : (
         <>
           <Typography
-            variant="body1"  // Larger variant for greater emphasis
+            variant="body1"
             sx={{
-              color: '#4CAF50',  // Vibrant color to denote positive or negative balance clearly
-              fontWeight: 'bold',  // Bold for more impact
-              // textAlign: 'center',
+              color: '#4CAF50',
+              fontWeight: 'bold',
               mb: 2,
-              mt: 2,  // Added some margin-top for spacing
-              background: 'linear-gradient(45deg, #333, #1E1E1E)',  // A subtle background gradient for a modern touch
-              p: 2,  // Padding to give some breathing room around the text
-              borderRadius: '8px',  // Rounded corners for a softer look
-              boxShadow: '0 4px 10px rgba(0, 150, 0, 0.2)',  // Soft shadow for a 3D effect
-              // width: 'auto',  // Auto width to wrap content
-              // maxWidth: '100%',  // Maximum width to avoid overly wide elements
-              // mx: 'auto'  // Margins on the x-axis set to auto for center alignment
+              mt: 2,
+              background: 'linear-gradient(45deg, #333, #1E1E1E)',
+              p: 2,
+              borderRadius: '8px',
+              boxShadow: '0 4px 10px rgba(0, 150, 0, 0.2)',
             }}
           >
             {formattedTotalBalance}
           </Typography>
 
-          {balances.length > 0 ? (
+          {balances.length > 0 && (
             <Grid container spacing={2}>
               {balances.map((balance) => {
                 const member = members.find(m => m.user_id === balance.other_user_id);
@@ -309,146 +321,167 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
                 );
               })}
             </Grid>
-          ) : (
-            <Typography variant="body1" sx={{ textAlign: "center", padding: 2 }}>
-              No balances to display.
-            </Typography>
           )}
+
+          <Divider sx={{ my: 4, bgcolor: '#555' }} /> {/* Divider after balances */}
+
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+            <Avatar sx={{ bgcolor: '#FF5722', width: 36, height: 36, mr: 2 }}>
+              <ReceiptIcon sx={{ color: '#FFF' }} />
+            </Avatar>
+            <Typography variant="h5" sx={{ color: "#FF5722", fontWeight: "bold" }}>
+              Expenses
+            </Typography>
+          </Box>
+
+          {expenses.length > 0 ? (
+            expenses.map((expense) => {
+              const displayName = expense.username === loggedInUsername ? "You" : expense.username || "Unknown";
+              const formattedAmount = parseFloat(expense.amount).toFixed(2);
+              const userShare = expense.shares?.find(share => share.user_id === loggedInUserId);
+              let userInvolvementMessage = "You are not involved";
+              if (userShare) {
+                const shareAmount = parseFloat(userShare.share_amount).toFixed(2);
+                userInvolvementMessage = expense.paid_by === loggedInUserId
+                  ? `You lent $${shareAmount}`
+                  : `You borrowed $${shareAmount}`;
+              }
+              const canDeleteAndEdit = loggedInUserId === creatorUserId || loggedInUserId === expense.paid_by;
+              return (
+                <Paper key={expense.id} elevation={3} sx={{ my: 2, p: 2, bgcolor: "#333", borderRadius: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ color: '#FFF', fontWeight: 'medium' }}>
+                    {expense.expense_name}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#CCC" }}>
+                    Amount: ${formattedAmount} - Paid by: {displayName} - Date: {formatDate(expense.date)}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#CCC" }}>
+                    {userInvolvementMessage}
+                  </Typography>
+                  {canDeleteAndEdit && (
+                    <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                      <Button variant="contained" color="primary" onClick={() => handleUpdateExpenseModalOpen(expense)}>
+                        Edit
+                      </Button>
+                      <Button variant="contained" color="error" onClick={() => {
+                        setExpenseToDelete(expense.id);
+                        setConfirmDeleteOpen(true);
+                      }}>
+                        Delete
+                      </Button>
+                    </Box>
+                  )}
+                </Paper>
+              );
+            })
+          ) : null}
         </>
       )}
 
-      {loading ? (
-        <CircularProgress sx={{ display: "block", margin: "20px auto", color: '#4CAF50' }} />
-      ) : (
-        expenses.length > 0 ? (
-          expenses.map((expense) => {
-            const displayName = expense.username === loggedInUsername ? "You" : expense.username || "Unknown";
-            const formattedAmount = parseFloat(expense.amount).toFixed(2);
-            const userShare = expense.shares?.find(share => share.user_id === loggedInUserId);
-            let userInvolvementMessage = "You are not involved";
-            if (userShare) {
-              const shareAmount = parseFloat(userShare.share_amount).toFixed(2);
-              userInvolvementMessage = expense.paid_by === loggedInUserId
-                ? `You lent $${shareAmount}`
-                : `You borrowed $${shareAmount}`;
-            }
-            const canDeleteAndEdit = loggedInUserId === creatorUserId || loggedInUserId === expense.paid_by;
-            return (
-              <Paper key={expense.id} elevation={3} sx={{ my: 2, p: 2, bgcolor: "#333", borderRadius: 2 }}>
-                <Typography variant="subtitle1" gutterBottom sx={{ color: '#FFF', fontWeight: 'medium' }}>
-                  {expense.expense_name}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#CCC" }}>
-                  Amount: ${formattedAmount} - Paid by: {displayName} - Date: {formatDate(expense.date)}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#CCC" }}>
-                  {userInvolvementMessage}
-                </Typography>
-                {canDeleteAndEdit && (
-                  <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                    <Button variant="contained" color="primary" onClick={() => handleUpdateExpenseModalOpen(expense)}>
-                      Edit
-                    </Button>
-                    <Button variant="contained" color="error" onClick={() => {
-                      setExpenseToDelete(expense.id);
-                      setConfirmDeleteOpen(true);
-                    }}>
-                      Delete
-                    </Button>
-                  </Box>
-                )}
-              </Paper>
-            );
-          })
-        ) : (
-          <Typography
-            variant="body1"
-            sx={{
-              textAlign: "center",
-              padding: 2,
-              color: '#FFF',  // Maintains white text for clarity
-              background: 'linear-gradient(to right, #4CAF50, #1E1E1E)',  // Adds a dynamic gradient background
-              borderRadius: '8px',  // Soft rounded corners
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',  // Subtle shadow for depth
-              fontWeight: 'bold',  // Bold font for emphasis
-              maxWidth: '80%',  // Restricting width to better manage space
-              margin: '20px auto',  // Centering and adding vertical spacing
-              display: 'block',  // Ensures it behaves as a block for better margin handling
-            }}
-          >
-            No expenses to display for this group.
-          </Typography>
-
-        )
-      )}
-
-      <Button
-        variant="contained"
-        color="primary"
-        sx={{ mt: 4, bgcolor: '#4CAF50', '&:hover': { bgcolor: '#43A047' } }}
-        onClick={handleAddExpenseModalOpen}
-      >
-        Add New Expense
-      </Button>
+      {/* Sticky Button positioned at the bottom of the viewport */}
+      <Box sx={{
+        position: 'fixed',
+        bottom: 30,  // Adjust this value as needed
+        right: 30,   // Adjust this value as needed
+        zIndex: 1100 // Ensures it stays on top of other content
+      }}>
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ bgcolor: '#089404', '&:hover': { bgcolor: '#008000' } }}
+          onClick={handleAddExpenseModalOpen}
+        >
+          Add New Expense
+        </Button>
+      </Box>
 
       {/* Confirmation Dialog when deleting expense */}
       <Dialog
         open={confirmDeleteOpen}
         onClose={() => setConfirmDeleteOpen(false)}
+        PaperProps={{
+          style: {
+            backgroundColor: '#333',  // Dark background for the dialog
+            color: '#DDD'  // Light text color for better readability on dark backgrounds
+          }
+        }}
       >
-        <DialogTitle>Confirm Expense Deletion</DialogTitle>
+        <DialogTitle sx={{ color: '#FFF' }}>Confirm Expense Deletion</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this expense? This action cannot be
-            undone and will update balances accordingly.
+          <DialogContentText sx={{ color: '#CCC' }}>
+            Are you sure you want to delete this expense? This action cannot be undone and will update balances accordingly.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDeleteOpen(false)} color="primary">
+          <Button onClick={() => setConfirmDeleteOpen(false)} sx={{ color: '#4CAF50' }}>
             Cancel
           </Button>
-          <Button onClick={handleDeleteExpense} color="error">
+          <Button onClick={handleDeleteExpense} sx={{ color: '#F44336' }}>
             Delete
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Modal for Adding a New Expense */}
-      <Modal open={addExpenseModalOpen} onClose={handleAddExpenseModalClose}>
+      <Modal
+        open={addExpenseModalOpen}
+        onClose={handleAddExpenseModalClose}
+        aria-labelledby="add-expense-modal"
+        aria-describedby="modal-for-adding-expense"
+      >
         <Box
           sx={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 400,
-            bgcolor: "background.paper",
+            width: 400, // Fixed width
+            bgcolor: "#2C2C2C",  // Dark background consistent with the original modal theme
             boxShadow: 24,
             p: 4,
             borderRadius: 2,
+            color: '#DDD',  // Ensuring text is light grey for readability
+            border: "1px solid #333"  // Subtle border matching dark theme
           }}
         >
-          <Typography variant="h6" gutterBottom>
+          <Typography id="add-expense-modal" variant="h6" component="h2" sx={{ color: '#FFF' }}>
             Add New Expense
           </Typography>
-
           <TextField
             label="Expense Name"
             fullWidth
             value={addExpenseName}
             onChange={(e) => setAddExpenseName(e.target.value)}
-            sx={{ marginBottom: 2 }}
+            sx={{
+              marginBottom: 2,
+              '& label.Mui-focused': { color: '#00e676' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#555' },
+                '&:hover fieldset': { borderColor: '#777' },
+                '&.Mui-focused fieldset': { borderColor: '#00e676' },
+              }
+            }}
+            InputLabelProps={{ style: { color: "#AAA" } }}
+            inputProps={{ style: { color: "#DDD" } }}
           />
-
           <TextField
             label="Amount"
             fullWidth
             type="number"
             value={addAmount}
             onChange={(e) => setAddAmount(e.target.value)}
-            sx={{ marginBottom: 2 }}
+            sx={{
+              marginBottom: 2,
+              '& label.Mui-focused': { color: '#00e676' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#555' },
+                '&:hover fieldset': { borderColor: '#777' },
+                '&.Mui-focused fieldset': { borderColor: '#00e676' },
+              }
+            }}
+            InputLabelProps={{ style: { color: "#AAA" } }}
+            inputProps={{ style: { color: "#DDD" } }}
           />
-
           <TextField
             label="Paid By"
             select
@@ -456,14 +489,23 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
             value={addPaidBy}
             onChange={(e) => setAddPaidBy(e.target.value)}
             sx={{ marginBottom: 2 }}
+            InputLabelProps={{ style: { color: "#AAA" } }}
+            inputProps={{ style: { color: "#DDD" } }}
+            MenuProps={{
+              PaperProps: {
+                style: {
+                  backgroundColor: "#333",
+                  color: "#FFF",
+                }
+              }
+            }}
           >
             {members.map((member) => (
-              <MenuItem key={member.id} value={member.user_id}>
+              <MenuItem key={member.id} value={member.user_id} sx={{ color: "#FFF", backgroundColor: "#333", '&:hover': { backgroundColor: "#555" } }}>
                 {member.username === loggedInUsername ? "You" : member.username}
               </MenuItem>
             ))}
           </TextField>
-
           <TextField
             label="Split Between"
             select
@@ -472,19 +514,34 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
             onChange={(e) => setAddSplitBetween(e.target.value)}
             SelectProps={{
               multiple: true,
+              MenuProps: {
+                PaperProps: {
+                  style: {
+                    backgroundColor: "#333",
+                    color: "#FFF",
+                  }
+                }
+              }
             }}
             sx={{ marginBottom: 2 }}
+            InputLabelProps={{ style: { color: "#AAA" } }}
+            inputProps={{ style: { color: "#DDD" } }}
           >
             {members.map((member) => (
-              <MenuItem key={member.id} value={member.user_id}>
+              <MenuItem key={member.id} value={member.user_id} sx={{ color: "#FFF", backgroundColor: "#333", '&:hover': { backgroundColor: "#555" } }}>
                 {member.username === loggedInUsername ? "You" : member.username}
               </MenuItem>
             ))}
           </TextField>
-
           <Button
             variant="contained"
-            color="primary"
+            sx={{
+              mt: 2,
+              width: "100%", // Full width button on smaller screens
+              bgcolor: "#089404", // Button color to match the focus border color
+              "&:hover": { bgcolor: "#008000" }, // Darker shade for hover
+              color: '#FFF', // Text color white
+            }}
             onClick={handleAddExpense}
             fullWidth
           >

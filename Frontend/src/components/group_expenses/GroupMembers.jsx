@@ -154,7 +154,7 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
             }}
             onClick={() => setViewMembers(true)}
           >
-            See Members
+            Members
           </Button>
         </Box>
       </Box>
