@@ -14,7 +14,7 @@ import GroupsDisplay from "./components/group_expenses/GroupsDisplay";
 const theme = createTheme({
   palette: {
     background: {
-      default: "#121212", // Set your background color here
+      default: "#121212", 
     },
   },
 });

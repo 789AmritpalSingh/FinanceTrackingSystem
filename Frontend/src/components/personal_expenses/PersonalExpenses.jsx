@@ -204,7 +204,7 @@ const PersonalExpenses = () => {
     <Container
       maxWidth={false}
       sx={{
-        backgroundColor: "#1A1A1A",
+        backgroundColor: "#121212",
         minHeight: "100vh",
         py: 4,
         px: { xs: 2, sm: 3, md: 6 },

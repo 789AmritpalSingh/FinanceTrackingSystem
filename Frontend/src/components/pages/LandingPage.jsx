@@ -9,7 +9,7 @@ const LandingPage = () => {
   return (
     <Box
       sx={{
-        background: "#1A1A1A",
+        background: "#121212",
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
