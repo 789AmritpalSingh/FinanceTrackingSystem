@@ -36,10 +36,8 @@ const ProtectedRoute = ({ children }) => {
         const data = await user_details.json();
 
         if (user_details.ok && data.is_logged_in === 0) {
-          console.log("Calling log in action")
           dispatch(login(data)); // User is logged in
         } else {
-          console.log('Calling log out api')
           // Call logout API if user is not logged in or token is invalid
           try {
             const update_log_out_response = await fetch(
@@ -82,7 +80,6 @@ const ProtectedRoute = ({ children }) => {
 
   if (!isAuthenticated) {
     // If user is not authenticated, redirect to the login page
-    console.log("User is not logged in");
     return <Navigate to="/login" />;
   }
 

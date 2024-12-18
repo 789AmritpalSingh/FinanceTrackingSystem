@@ -3,19 +3,8 @@ import {
   Box,
   Typography,
   IconButton,
-  Modal,
-  TextField,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -304,14 +293,14 @@ const GroupDetails = () => {
       {/* Confirmation Dialog for Leaving Group */}
       <LeaveGroupDialog
         leaveGroupConfirmOpen={leaveGroupConfirmOpen}
-        setLeaveGroupConfirmOpen={setDeleteConfirmOpen}
+        setLeaveGroupConfirmOpen={setLeaveGroupConfirmOpen}
         handleLeaveGroup={handleLeaveGroup}
       />
 
       {/* Dialogue for Changing the Group Creator */}
       <ChangeGroupCreatorDialog
         selectNewCreatorOpen={selectNewCreatorOpen}
-        setSelectNewCreatorOpen={setDeleteConfirmOpen}
+        setSelectNewCreatorOpen={setSelectNewCreatorOpen}
         setNewCreatorId={setNewCreatorId}
         newCreatorId={newCreatorId}
         members={members}
