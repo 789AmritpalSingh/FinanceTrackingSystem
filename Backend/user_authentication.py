@@ -30,6 +30,9 @@ class UserRegistration(Resource):
         # Automatically generate a JWT token for the new user
         access_token = create_access_token(identity=username)
 
+        # Fetch this new user details 
+        user_details = db.fetch_user_details(username)
+
         # Return the token and success message
         return {
             "message": "User created successfully",

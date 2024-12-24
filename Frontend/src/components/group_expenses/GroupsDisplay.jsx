@@ -95,48 +95,21 @@ const GroupsDisplay = () => {
         alignItems: "center",
         gap: 4,
         width: "100%", // Expands to full width
+        position: "relative", // Needed for positioning the sticky button
       }}
     >
-      {/* Header with Your Groups and Create Group Button */}
-      <Box
+      {/* Header */}
+      <Typography
+        variant="h3"
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          width: "100%", // Covers the full width
-          paddingX: { xs: 2, md: 4 }, // Adds responsive horizontal padding
-          marginBottom: 4, // Space between header and list
+          fontWeight: "bold",
+          color: "#00e676",
+          fontSize: { xs: "1.8rem", sm: "2.4rem", md: "3rem", lg: "3.5rem", xl: "4rem" },
+          textAlign: "center",
         }}
       >
-        <Typography
-          variant="h3"
-          sx={{
-            fontWeight: "bold",
-            color: "#00e676",
-          }}
-        >
-          Your Groups
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddCircleOutlineIcon />}
-          onClick={handleGroupCreationModalOpen}
-          sx={{
-            minWidth: { xs: "100%", sm: "150px" }, // Button width is responsive
-            bgcolor: "#089404", // Button color to match the focus border color
-            "&:hover": {
-              bgcolor: "#008000", // Darker shade for hover
-            },
-            borderRadius: "20px", // Add border radius here
-            fontSize: { xs: "14px", md: "16px" }, // Responsive font size
-            fontWeight: "bold",
-            color: "white",
-            height: { xs: "40px", md: "50px" }, // Adjust height for smaller screens
-          }}
-        >
-          Create New Group
-        </Button>
-      </Box>
+        Your Groups
+      </Typography>
 
       {/* Groups List */}
       <Box
@@ -267,6 +240,32 @@ const GroupsDisplay = () => {
           </Typography>
         )}
       </Box>
+
+      {/* Sticky Create New Group Button */}
+      <Button
+        variant="contained"
+        startIcon={<AddCircleOutlineIcon />}
+        onClick={handleGroupCreationModalOpen}
+        sx={{
+          position: "sticky",
+          bottom: 16,
+          right: 16,
+          minWidth: { xs: "80px", sm: "120px" }, // Button width is responsive
+          bgcolor: "#089404",
+          "&:hover": {
+            bgcolor: "#008000",
+          },
+          borderRadius: "50px",
+          fontSize: { xs: "12px", sm: "14px", md: "16px" },
+          fontWeight: "bold",
+          color: "white",
+          padding: { xs: "10px", sm: "12px", md: "14px" },
+          zIndex: 1000, // Ensures it stays on top
+          alignSelf: "flex-end", // Pushes button to the right
+        }}
+      >
+        Create New Group
+      </Button>
 
       <CreateNewGroupModal
         groupCreationModalOpen={groupCreationModalOpen}
