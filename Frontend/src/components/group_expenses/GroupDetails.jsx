@@ -5,6 +5,8 @@ import {
   IconButton,
   Button,
   CircularProgress,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -20,6 +22,7 @@ import {
 import { updateGroupName } from "../api_functions/group_expenses/updateGroupName";
 import { deleteGroup } from "../api_functions/group_expenses/deleteGroup";
 import GroupMembers from "./GroupMembers";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { getGroupsForUser } from "../api_functions/group_expenses/getGroupsForUser";
 import { removeGroupMember } from "../api_functions/group_expenses/removeGroupMember";
 import { clearGroupMembersState } from "../../redux/groupMembersSlice";
@@ -189,15 +192,19 @@ const GroupDetails = () => {
     );
   }
 
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
     <Box
       sx={{
-        padding: 4,
+        padding: { xs: 2, md: 4 },
         backgroundColor: "#121212",
         minHeight: "100vh",
         color: "white",
       }}
     >
+
       {/* Group Header with Title and Actions */}
       <Box
         sx={{
@@ -209,25 +216,60 @@ const GroupDetails = () => {
           backgroundColor: "#1E1E1E",
           padding: 2,
           boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)",
+          position: "sticky",
+          zIndex: 1100,
+          top: { xs: "60px", md: "90px" },
+          marginBottom: 2,
+          flexDirection: { xs: "column", sm: "row" }, // Stack on small screens
+          textAlign: { xs: "center", sm: "left" }, // Center text on small screens
         }}
       >
-        {/* Group Name */}
-        <Typography
-          variant="h4"
+        {/* Header with Back Arrow and Group Name */}
+        <Box
           sx={{
-            fontWeight: "bold",
-            color: "#FFF",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            flexGrow: 1, // Allow this section to take up remaining space
           }}
         >
-          {group?.group_name}
-        </Typography>
+          {/* Back Arrow button */}
+          <IconButton
+            onClick={() => navigate("/group_expenses")}
+            sx={{
+              color: "#FFF",
+              backgroundColor: "#333",
+              "&:hover": { backgroundColor: "#444" },
+              fontSize: { xs: "1.5rem", sm: "2rem" },
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
 
+          {/* Group Name */}
+          <Typography
+            variant={isSmallScreen ? "h5" : "h4"} // Adjust font size responsively
+            sx={{
+              fontWeight: "bold",
+              color: "#FFF",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {group?.group_name}
+          </Typography>
+        </Box>
         {/* Actions: Edit, Delete, Leave */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {/* Update and Delete Buttons for Group Creator */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            flexWrap: "wrap", // Wrap buttons on smaller screens
+            justifyContent: { xs: "center", sm: "flex-end" },
+          }}
+        >
           {loggedInUserId === creatorUserId && (
             <>
               <IconButton
@@ -251,7 +293,6 @@ const GroupDetails = () => {
             </>
           )}
 
-          {/* Leave Group Button */}
           <Button
             variant="contained"
             color="error"
@@ -260,6 +301,8 @@ const GroupDetails = () => {
               fontWeight: "bold",
               backgroundColor: "#FF5252",
               "&:hover": { backgroundColor: "#FF3030" },
+              fontSize: { xs: "12px", sm: "14px", md: "16px" }, // Responsive font size
+              padding: { xs: "6px 12px", sm: "8px 16px" }, // Adjust padding for small screens
             }}
           >
             Leave Group

@@ -35,23 +35,31 @@ const AddExpenseModal = ({
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
-        width: 400, // Fixed width
+        width: { xs: "90%", sm: "75%", md: 400 }, // Responsive width
         bgcolor: "#2C2C2C", // Dark background consistent with the original modal theme
         boxShadow: 24,
-        p: 4,
+        p: { xs: 2, sm: 3, md: 4 }, // Responsive padding
         borderRadius: 2,
         color: "#DDD", // Ensuring text is light grey for readability
         border: "1px solid #333", // Subtle border matching dark theme
       }}
     >
+      {/* Modal Title */}
       <Typography
         id="add-expense-modal"
         variant="h6"
         component="h2"
-        sx={{ color: "#FFF" }}
+        sx={{
+          color: "#FFF",
+          fontSize: { xs: "1.2rem", sm: "1.5rem" }, // Responsive font size
+          textAlign: "center", // Center-align the title
+          mb: 3, // Spacing below the title
+        }}
       >
         Add New Expense
       </Typography>
+
+      {/* Expense Name */}
       <TextField
         label="Expense Name"
         fullWidth
@@ -69,6 +77,8 @@ const AddExpenseModal = ({
         InputLabelProps={{ style: { color: "#AAA" } }}
         inputProps={{ style: { color: "#DDD" } }}
       />
+
+      {/* Amount */}
       <TextField
         label="Amount"
         fullWidth
@@ -87,6 +97,8 @@ const AddExpenseModal = ({
         InputLabelProps={{ style: { color: "#AAA" } }}
         inputProps={{ style: { color: "#DDD" } }}
       />
+
+      {/* Paid By */}
       <TextField
         label="Paid By"
         select
@@ -96,8 +108,8 @@ const AddExpenseModal = ({
         sx={{
           marginBottom: 2,
           "& .MuiInputBase-root": {
-            backgroundColor: "#333", // Dark background for the input field
-            color: "#FFF", // White text for the input field
+            backgroundColor: "#333",
+            color: "#FFF",
           },
           "& .MuiOutlinedInput-root": {
             "& fieldset": { borderColor: "#555" },
@@ -106,12 +118,12 @@ const AddExpenseModal = ({
           },
         }}
         InputLabelProps={{ style: { color: "#AAA" } }}
-        inputProps={{ style: { color: "#FFF" } }} // White text for the input field
+        inputProps={{ style: { color: "#FFF" } }}
         MenuProps={{
           PaperProps: {
             style: {
-              backgroundColor: "#333", // Dark background for the dropdown menu
-              color: "#FFF", // White text for the dropdown menu items
+              backgroundColor: "#333",
+              color: "#FFF",
             },
           },
         }}
@@ -121,17 +133,14 @@ const AddExpenseModal = ({
             key={member.id}
             value={member.user_id}
             sx={{
-              color: "#FFF", // White text for menu items
-              backgroundColor: "#333", // Dark background for menu items
+              color: "#FFF",
+              backgroundColor: "#333",
               "&.Mui-selected": {
-                backgroundColor: "#00e676", // Green background for the selected item
-                color: "#000", // Black text for better readability on green
-              },
-              "&.Mui-selected:hover": {
-                backgroundColor: "#00c853", // Darker green for hover on the selected item
+                backgroundColor: "#00e676",
+                color: "#000",
               },
               "&:hover": {
-                backgroundColor: "#555", // Hover effect for unselected items
+                backgroundColor: "#555",
               },
             }}
           >
@@ -140,7 +149,7 @@ const AddExpenseModal = ({
         ))}
       </TextField>
 
-
+      {/* Split Between */}
       <TextField
         label="Split Between"
         select
@@ -152,15 +161,15 @@ const AddExpenseModal = ({
           MenuProps: {
             PaperProps: {
               style: {
-                backgroundColor: "#333", // Dark background for dropdown
-                color: "#FFF", // White text for dropdown items
+                backgroundColor: "#333",
+                color: "#FFF",
               },
             },
           },
         }}
         sx={{
           marginBottom: 2,
-          "& .MuiInputBase-root": { backgroundColor: "#333", color: "#FFF" }, // Dark background and white text for input
+          "& .MuiInputBase-root": { backgroundColor: "#333", color: "#FFF" },
           "& .MuiOutlinedInput-root": {
             "& fieldset": { borderColor: "#555" },
             "&:hover fieldset": { borderColor: "#777" },
@@ -168,7 +177,7 @@ const AddExpenseModal = ({
           },
         }}
         InputLabelProps={{ style: { color: "#AAA" } }}
-        inputProps={{ style: { color: "#FFF" } }} // White text for input
+        inputProps={{ style: { color: "#FFF" } }}
       >
         {members.map((member) => (
           <MenuItem
@@ -185,14 +194,16 @@ const AddExpenseModal = ({
         ))}
       </TextField>
 
+      {/* Submit Button */}
       <Button
         variant="contained"
         sx={{
           mt: 2,
-          width: "100%", // Full width button on smaller screens
-          bgcolor: "#089404", // Button color to match the focus border color
-          "&:hover": { bgcolor: "#008000" }, // Darker shade for hover
-          color: "#FFF", // Text color white
+          width: "100%", // Full width button
+          bgcolor: "#089404",
+          "&:hover": { bgcolor: "#008000" },
+          fontSize: { xs: "0.9rem", sm: "1rem" }, // Responsive font size
+          padding: { xs: "8px 12px", sm: "10px 16px" }, // Responsive padding
         }}
         onClick={handleAddExpense}
         fullWidth
