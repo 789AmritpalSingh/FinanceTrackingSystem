@@ -232,8 +232,8 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
     totalBalance > 0
       ? `You are owed $${totalBalance.toFixed(2)} in total.`
       : totalBalance < 0
-      ? `You owe $${Math.abs(totalBalance).toFixed(2)} in total.`
-      : "Your balance is settled";
+        ? `You owe $${Math.abs(totalBalance).toFixed(2)} in total.`
+        : "Your balance is settled";
 
   return (
     <Box
@@ -258,51 +258,58 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Avatar sx={{ bgcolor: "#4CAF50", width: 36, height: 36, mr: 2 }}>
-              <AccountBalanceIcon sx={{ color: "#FFF" }} />
+            <Avatar sx={{
+              bgcolor: "#4CAF50",
+              width: { xs: 28, sm: 36 }, // Responsive avatar size
+              height: { xs: 28, sm: 36 }, // Responsive avatar size
+              mr: 2,
+            }}>
+              <AccountBalanceIcon sx={{ color: "#FFF", fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
             </Avatar>
             <Typography
-              variant="h5"
-              sx={{ color: "#4CAF50", fontWeight: "bold" }}
+              sx={{ color: "#4CAF50", fontWeight: "bold", fontSize: { xs: "1.2rem", sm: "1.5rem" } }}
             >
               Balances
             </Typography>
           </Box>
         </Box>
-      )}
+      )
+      }
 
-      {balancesLoading || loading ? (
-        <CircularProgress
-          sx={{ display: "block", margin: "20px auto", color: "#4CAF50" }}
-        />
-      ) : balances.length === 0 && expenses.length === 0 ? (
-        <Typography
-          align="center"
-          sx={{
-            mt: 4,
-            color: "lightgray",
-            fontSize: { xs: "1rem", md: "1.5rem" }, // Responsive font size
-            fontWeight: "bold", // Make the text bold
-          }}
-        >
-          This group does not record any expense yet. Be the first one to add an
-          expense in this group!!
-        </Typography>
-      ) : (
-        <BalanceAndExpensesDisplay
-          formattedTotalBalance={formattedTotalBalance}
-          balances={balances}
-          members={members}
-          loggedInUsername={loggedInUsername}
-          expenses={expenses}
-          loggedInUserId={loggedInUserId}
-          creatorUserId={creatorUserId}
-          handleUpdateExpenseModalOpen={handleUpdateExpenseModalOpen}
-          setExpenseToDelete={setExpenseToDelete}
-          setConfirmDeleteOpen={setConfirmDeleteOpen}
-          formatDate={formatDate}
-        />
-      )}
+      {
+        balancesLoading || loading ? (
+          <CircularProgress
+            sx={{ display: "block", margin: "20px auto", color: "#4CAF50" }}
+          />
+        ) : balances.length === 0 && expenses.length === 0 ? (
+          <Typography
+            align="center"
+            sx={{
+              mt: 4,
+              color: "lightgray",
+              fontSize: { xs: "1rem", md: "1.5rem" }, // Responsive font size
+              fontWeight: "bold", // Make the text bold
+            }}
+          >
+            This group does not record any expense yet. Be the first one to add an
+            expense in this group!!
+          </Typography>
+        ) : (
+          <BalanceAndExpensesDisplay
+            formattedTotalBalance={formattedTotalBalance}
+            balances={balances}
+            members={members}
+            loggedInUsername={loggedInUsername}
+            expenses={expenses}
+            loggedInUserId={loggedInUserId}
+            creatorUserId={creatorUserId}
+            handleUpdateExpenseModalOpen={handleUpdateExpenseModalOpen}
+            setExpenseToDelete={setExpenseToDelete}
+            setConfirmDeleteOpen={setConfirmDeleteOpen}
+            formatDate={formatDate}
+          />
+        )
+      }
 
       {/* Sticky Button positioned at the bottom of the viewport */}
       <Box
@@ -316,7 +323,11 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
         <Button
           variant="contained"
           color="primary"
-          sx={{ bgcolor: "#089404", "&:hover": { bgcolor: "#008000" } }}
+          sx={{
+            bgcolor: "#089404", "&:hover": { bgcolor: "#008000" }, fontSize: { xs: "0.8rem", sm: "1rem" }, // Responsive font size
+            padding: { xs: "6px 12px", sm: "8px 16px" }, // Adjust padding for small screens
+            borderRadius: "8px",
+          }}
           onClick={handleAddExpenseModalOpen}
         >
           Add New Expense
@@ -380,22 +391,24 @@ const GroupExpenses = ({ groupId, loggedInUserId }) => {
       </Snackbar>
 
       {/* Error alert if any */}
-      {error && (
-        <Snackbar
-          open={!!error}
-          autoHideDuration={3000}
-          onClose={() => dispatch(setGroupExpenseError(null))}
-        >
-          <Alert
+      {
+        error && (
+          <Snackbar
+            open={!!error}
+            autoHideDuration={3000}
             onClose={() => dispatch(setGroupExpenseError(null))}
-            severity="error"
-            sx={{ width: "100%" }}
           >
-            {error}
-          </Alert>
-        </Snackbar>
-      )}
-    </Box>
+            <Alert
+              onClose={() => dispatch(setGroupExpenseError(null))}
+              severity="error"
+              sx={{ width: "100%" }}
+            >
+              {error}
+            </Alert>
+          </Snackbar>
+        )
+      }
+    </Box >
   );
 };
 

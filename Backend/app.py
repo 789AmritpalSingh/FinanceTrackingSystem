@@ -61,4 +61,5 @@ app.add_url_rule('/update_group_expense/<int:expense_id>/<int:group_id>', 'updat
 app.add_url_rule('/get_user_balances', 'get_user_balances', get_user_balances, methods=['GET'])
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
+

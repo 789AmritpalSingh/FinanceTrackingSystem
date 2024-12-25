@@ -7,6 +7,7 @@ import { login, logout } from "../../redux/authSlice";
 const useAuthCheck = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const checkUserLoggedInStatus = async () => {
@@ -21,7 +22,7 @@ const useAuthCheck = () => {
 
       try {
         const response = await fetch(
-          "http://localhost:5000/get_user_account_details",
+          `${API_BASE_URL}/get_user_account_details`,
           {
             headers: {
               Authorization: `Bearer ${token}`, // Use JWT token for authentication

@@ -1,7 +1,9 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const addNewMemberToGroup = async (token, groupId, userName) => {
     try {
       const response = await fetch(
-        "http://localhost:5000/add_new_member",
+        `${API_BASE_URL}/add_new_member`,
         {
           method: "POST",
           headers: {

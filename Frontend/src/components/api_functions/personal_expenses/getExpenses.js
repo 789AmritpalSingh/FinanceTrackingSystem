@@ -1,3 +1,5 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const getExpenses = async (token, start_date, end_date, category) => {
   try {
 
@@ -9,7 +11,7 @@ export const getExpenses = async (token, start_date, end_date, category) => {
     if (end_date) params.append("end_date", end_date);
     if (category) params.append("category", category);
 
-    const response = await fetch(`http://localhost:5000/get_user_expenses?${params.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/get_user_expenses?${params.toString()}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

@@ -1,7 +1,9 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const addExpense = async (token, newExpense) => {
     try {
       const response = await fetch(
-        "http://localhost:5000/add_individual_expense",
+        `${API_BASE_URL}/add_individual_expense`,
         {
           method: "POST",
           headers: {

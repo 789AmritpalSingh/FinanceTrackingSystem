@@ -1,7 +1,9 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const updateExpense = async (token, expenseToUpdate) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/update_expense/${expenseToUpdate.id}`,
+        `${API_BASE_URL}/update_expense/${expenseToUpdate.id}`,
         {
           method: "PUT",
           headers: {

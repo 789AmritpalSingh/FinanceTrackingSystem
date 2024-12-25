@@ -1,6 +1,8 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const getGroupsForUser = async (token) => {
     try {
-      const response = await fetch(`http://localhost:5000/get_group_names_for_user`, {
+      const response = await fetch(`${API_BASE_URL}/get_group_names_for_user`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

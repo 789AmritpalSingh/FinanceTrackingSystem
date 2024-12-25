@@ -1,6 +1,8 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const updateGroupExpense = async (token, expenseId, groupId, updatedExpenseData) => {
     try {
-      const response = await fetch(`http://localhost:5000/update_group_expense/${expenseId}/${groupId}`, {
+      const response = await fetch(`${API_BASE_URL}/update_group_expense/${expenseId}/${groupId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

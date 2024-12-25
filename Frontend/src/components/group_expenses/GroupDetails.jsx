@@ -7,6 +7,8 @@ import {
   CircularProgress,
   useTheme,
   useMediaQuery,
+  MenuItem,
+  Menu,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -65,6 +67,7 @@ const GroupDetails = () => {
   const [leaveGroupConfirmOpen, setLeaveGroupConfirmOpen] = useState(false);
   const [selectNewCreatorOpen, setSelectNewCreatorOpen] = useState(false);
   const [newCreatorId, setNewCreatorId] = useState("");
+  const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
 
   /**
    * Fetch groups if the Redux state is empty or group data is not loaded.
@@ -175,6 +178,14 @@ const GroupDetails = () => {
     }
   };
 
+  const handleActionMenuOpen = (event) => {
+    setActionMenuAnchor(event.currentTarget);
+  };
+
+  const handleActionMenuClose = () => {
+    setActionMenuAnchor(null);
+  };
+
   // Display a loading spinner if group details are not fully loaded
   if (loading || (!group && !loading)) {
     return (
@@ -204,7 +215,6 @@ const GroupDetails = () => {
         color: "white",
       }}
     >
-
       {/* Group Header with Title and Actions */}
       <Box
         sx={{
@@ -220,35 +230,29 @@ const GroupDetails = () => {
           zIndex: 1100,
           top: { xs: "60px", md: "90px" },
           marginBottom: 2,
-          flexDirection: { xs: "column", sm: "row" }, // Stack on small screens
-          textAlign: { xs: "center", sm: "left" }, // Center text on small screens
+          flexDirection: "row",
         }}
       >
-        {/* Header with Back Arrow and Group Name */}
+        {/* Back Arrow and Group Name */}
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
             gap: 2,
-            flexGrow: 1, // Allow this section to take up remaining space
           }}
         >
-          {/* Back Arrow button */}
           <IconButton
             onClick={() => navigate("/group_expenses")}
             sx={{
               color: "#FFF",
               backgroundColor: "#333",
               "&:hover": { backgroundColor: "#444" },
-              fontSize: { xs: "1.5rem", sm: "2rem" },
             }}
           >
             <ArrowBackIcon />
           </IconButton>
-
-          {/* Group Name */}
           <Typography
-            variant={isSmallScreen ? "h5" : "h4"} // Adjust font size responsively
+            variant={isSmallScreen ? "h5" : "h4"}
             sx={{
               fontWeight: "bold",
               color: "#FFF",
@@ -260,53 +264,64 @@ const GroupDetails = () => {
             {group?.group_name}
           </Typography>
         </Box>
-        {/* Actions: Edit, Delete, Leave */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            flexWrap: "wrap", // Wrap buttons on smaller screens
-            justifyContent: { xs: "center", sm: "flex-end" },
-          }}
-        >
-          {loggedInUserId === creatorUserId && (
-            <>
-              <IconButton
-                onClick={() => setEditGroupModalOpen(true)}
-                sx={{
-                  backgroundColor: "#333333",
-                  "&:hover": { backgroundColor: "#444444" },
-                }}
-              >
-                <EditIcon sx={{ color: "#00e676" }} />
-              </IconButton>
-              <IconButton
-                onClick={() => setDeleteConfirmOpen(true)}
-                sx={{
-                  backgroundColor: "#333333",
-                  "&:hover": { backgroundColor: "#FF5252" },
-                }}
-              >
-                <DeleteIcon sx={{ color: "#FF5252" }} />
-              </IconButton>
-            </>
-          )}
 
+        {/* Actions Dropdown */}
+        <Box>
           <Button
-            variant="contained"
-            color="error"
-            onClick={() => setLeaveGroupConfirmOpen(true)}
+            onClick={handleActionMenuOpen}
             sx={{
+              color: "#FFF",
               fontWeight: "bold",
-              backgroundColor: "#FF5252",
-              "&:hover": { backgroundColor: "#FF3030" },
-              fontSize: { xs: "12px", sm: "14px", md: "16px" }, // Responsive font size
-              padding: { xs: "6px 12px", sm: "8px 16px" }, // Adjust padding for small screens
+              fontSize: { xs: "14px", sm: "16px" },
+              backgroundColor: "#333",
+              "&:hover": { backgroundColor: "#444" },
             }}
           >
-            Leave Group
+            Actions
           </Button>
+          <Menu
+            anchorEl={actionMenuAnchor}
+            open={Boolean(actionMenuAnchor)}
+            onClose={handleActionMenuClose}
+            PaperProps={{
+              sx: {
+                backgroundColor: "#333", // Dark background
+                color: "#FFF", // White text
+                boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.5)", // Subtle shadow
+              },
+            }}
+          >
+            {loggedInUserId === creatorUserId && (
+              <>
+                <MenuItem
+                  onClick={() => {
+                    setEditGroupModalOpen(true);
+                    handleActionMenuClose();
+                  }}
+                >
+                  <EditIcon sx={{ marginRight: 1 }} />
+                  Edit Group Name
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setDeleteConfirmOpen(true);
+                    handleActionMenuClose();
+                  }}
+                >
+                  <DeleteIcon sx={{ marginRight: 1 }} />
+                  Delete Group
+                </MenuItem>
+              </>
+            )}
+            <MenuItem
+              onClick={() => {
+                setLeaveGroupConfirmOpen(true);
+                handleActionMenuClose();
+              }}
+            >
+              Leave Group
+            </MenuItem>
+          </Menu>
         </Box>
       </Box>
 

@@ -25,6 +25,7 @@ const NavBar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false); // Mobile drawer state
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Handle user logout
   const handleLogout = async () => {
@@ -33,7 +34,7 @@ const NavBar = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/update_user_log_out",
+        `${API_BASE_URL}/update_user_log_out`,
         {
           method: "PUT",
           headers: {

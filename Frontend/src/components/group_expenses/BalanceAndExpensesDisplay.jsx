@@ -18,7 +18,6 @@ const BalanceAndExpensesDisplay = ({
 }) => (
   <>
     <Typography
-      variant="body1"
       sx={{
         color: "#4CAF50",
         fontWeight: "bold",
@@ -28,6 +27,7 @@ const BalanceAndExpensesDisplay = ({
         p: 2,
         borderRadius: "8px",
         boxShadow: "0 4px 10px rgba(0, 150, 0, 0.2)",
+        fontSize: { xs: "0.9rem", md: "1.1rem" }, // Responsive font size
       }}
     >
       {formattedTotalBalance}
@@ -48,15 +48,17 @@ const BalanceAndExpensesDisplay = ({
                 sx={{ p: 2, bgcolor: "#333", borderRadius: 2 }}
               >
                 <Typography
-                  variant="subtitle1"
                   sx={{
                     color: isOwed ? "#4CAF50" : "#FF5722",
                     fontWeight: "medium",
+                    fontSize: { xs: "0.9rem", md: "1.1rem" }, // Responsive font size
                   }}
                 >
                   {username}: ${formattedBalance}
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#CCC" }}>
+                <Typography sx={{
+                  color: "#CCC", fontSize: { xs: "0.8rem", md: "0.9rem" },
+                }}>
                   {isOwed
                     ? `You are owed $${formattedBalance} by ${username}`
                     : `You owe $${formattedBalance} to ${username}`}
@@ -68,86 +70,101 @@ const BalanceAndExpensesDisplay = ({
       </Grid>
     )}
     <Divider sx={{ my: 4, bgcolor: "#555" }} /> {/* Divider after balances */}
-    <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-      <Avatar sx={{ bgcolor: "#FF5722", width: 36, height: 36, mr: 2 }}>
-        <ReceiptIcon sx={{ color: "#FFF" }} />
+    <Box sx={{ display: "flex", alignItems: "center" }}>
+      <Avatar sx={{
+        bgcolor: "#FF5722", width: { xs: 28, sm: 36 }, // Responsive avatar size
+        height: { xs: 28, sm: 36 }, // Responsive avatar size
+        mr: 2,
+      }}>
+        <ReceiptIcon sx={{ color: "#FFF", fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
       </Avatar>
-      <Typography variant="h5" sx={{ color: "#FF5722", fontWeight: "bold" }}>
+      <Typography sx={{
+        color: "#FF5722", fontWeight: "bold", fontSize: { xs: "1.2rem", md: "1.5rem" }
+      }}>
         Expenses
       </Typography>
     </Box>
     {expenses.length > 0
       ? expenses.map((expense) => {
-          const displayName =
-            expense.username === loggedInUsername
-              ? "You"
-              : expense.username || "Unknown";
-          const formattedAmount = parseFloat(expense.amount).toFixed(2);
-          const userShare = expense.shares?.find(
-            (share) => share.user_id === loggedInUserId
-          );
-          let userInvolvementMessage = "You are not involved";
-          if (userShare) {
-            const shareAmount = parseFloat(userShare.share_amount).toFixed(2);
-            userInvolvementMessage =
-              expense.paid_by === loggedInUserId
-                ? `You lent $${shareAmount}`
-                : `You borrowed $${shareAmount}`;
-          }
-          const canDeleteAndEdit =
-            loggedInUserId === creatorUserId ||
-            loggedInUserId === expense.paid_by;
-          return (
-            <Paper
-              key={expense.id}
-              elevation={3}
-              sx={{ my: 2, p: 2, bgcolor: "#333", borderRadius: 2 }}
+        const displayName =
+          expense.username === loggedInUsername
+            ? "You"
+            : expense.username || "Unknown";
+        const formattedAmount = parseFloat(expense.amount).toFixed(2);
+        const userShare = expense.shares?.find(
+          (share) => share.user_id === loggedInUserId
+        );
+        let userInvolvementMessage = "You are not involved";
+        if (userShare) {
+          const shareAmount = parseFloat(userShare.share_amount).toFixed(2);
+          userInvolvementMessage =
+            expense.paid_by === loggedInUserId
+              ? `You lent $${shareAmount}`
+              : `You borrowed $${shareAmount}`;
+        }
+        const canDeleteAndEdit =
+          loggedInUserId === creatorUserId ||
+          loggedInUserId === expense.paid_by;
+        return (
+          <Paper
+            key={expense.id}
+            elevation={3}
+            sx={{ my: 2, p: 2, bgcolor: "#333", borderRadius: 2 }}
+          >
+            <Typography
+              gutterBottom
+              sx={{ color: "#FFF", fontWeight: "medium", fontSize: { xs: "0.9rem", sm: "1rem" } }}
             >
-              <Typography
-                variant="subtitle1"
-                gutterBottom
-                sx={{ color: "#FFF", fontWeight: "medium" }}
+              {expense.expense_name}
+            </Typography>
+            <Typography sx={{ color: "#CCC", fontSize: { xs: "0.8rem", sm: "0.9rem" } }}>
+              Amount: ${formattedAmount} - Paid by: {displayName} - Date:{" "}
+              {formatDate(expense.date)}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#CCC" }}>
+              {userInvolvementMessage}
+            </Typography>
+            {canDeleteAndEdit && (
+              <Box
+                sx={{
+                  mt: 1,
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 1,
+                }}
               >
-                {expense.expense_name}
-              </Typography>
-              <Typography variant="body2" sx={{ color: "#CCC" }}>
-                Amount: ${formattedAmount} - Paid by: {displayName} - Date:{" "}
-                {formatDate(expense.date)}
-              </Typography>
-              <Typography variant="body2" sx={{ color: "#CCC" }}>
-                {userInvolvementMessage}
-              </Typography>
-              {canDeleteAndEdit && (
-                <Box
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleUpdateExpenseModalOpen(expense)}
                   sx={{
-                    mt: 1,
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: 1,
+                    fontSize: { xs: "0.7rem", sm: "1rem" }, // Responsive font size
+                    padding: { xs: "4px 10px", sm: "8px 16px" }, // Adjust padding for small screens
+                    borderRadius: "8px", // Rounded corners for consistent design
                   }}
                 >
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleUpdateExpenseModalOpen(expense)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => {
-                      setExpenseToDelete(expense.id);
-                      setConfirmDeleteOpen(true);
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </Box>
-              )}
-            </Paper>
-          );
-        })
+                  Edit
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => {
+                    setExpenseToDelete(expense.id);
+                    setConfirmDeleteOpen(true);
+                  }}
+                  sx={{
+                    fontSize: { xs: "0.7rem", sm: "1rem" }, // Responsive font size
+                    padding: { xs: "4px 10px", sm: "8px 16px" }, // Adjust padding for small screens
+                    borderRadius: "8px", // Rounded corners for consistent design
+                  }}
+                >
+                  Delete
+                </Button>
+              </Box>
+            )}
+          </Paper>
+        );
+      })
       : null}
   </>
 );

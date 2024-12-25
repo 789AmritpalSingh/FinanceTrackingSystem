@@ -28,6 +28,8 @@ const Login = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // 'success' or 'error'
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -41,7 +43,7 @@ const Login = () => {
       return; // Prevent form submission
     }
 
-    const response = await fetch("http://localhost:5000/login", {
+    const response = await fetch(`${API_BASE_URL}/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

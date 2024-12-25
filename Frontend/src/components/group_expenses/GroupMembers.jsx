@@ -95,8 +95,9 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
           backgroundColor: "#1E1E1E",
           padding: { xs: 2, md: 3 },
           borderRadius: "8px",
-          flexDirection: { xs: "column", sm: "row" }, // Stack on smaller screens
-          gap: { xs: 2, sm: 0 }, // Add gap between stacked items on small screens
+          flexDirection: "row", 
+          gap: 2,
+          flexWrap: "wrap", // Allow wrapping for smaller screens
         }}
       >
         {/* Header: Group Members */}
@@ -108,7 +109,7 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
             gap: 1,
             color: "#FFF",
             fontSize: { xs: "1rem", sm: "1.25rem", md: "1.5rem" }, // Responsive text size
-            textAlign: { xs: "center", sm: "left" }, // Center-align text on small screens
+            textAlign: "left", // Always left-align text
             flexGrow: 1, // Let it expand to fill space
           }}
         >
@@ -128,7 +129,7 @@ const GroupMembers = ({ groupId, loggedInUserId, creatorUserId }) => {
           sx={{
             backgroundColor: "#089404",
             "&:hover": { backgroundColor: "#066f03" },
-            fontSize: { xs: "0.9rem", sm: "1rem" }, // Responsive button text
+            fontSize: { xs: "0.7rem", sm: "1rem" }, // Responsive button text
             padding: { xs: "6px 12px", sm: "8px 16px" }, // Adjust padding for small screens
             borderRadius: "12px", // Rounded button
           }}

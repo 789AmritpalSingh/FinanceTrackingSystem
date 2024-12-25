@@ -9,6 +9,7 @@ const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Access the authentication state from Redux
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const checkUserLoggedInStatus = async () => {
@@ -25,7 +26,7 @@ const ProtectedRoute = ({ children }) => {
       // Further check to make sure the user is actually logged in
       try {
         const user_details = await fetch(
-          "http://localhost:5000/get_user_account_details",
+          `${API_BASE_URL}/get_user_account_details`,
           {
             headers: {
               Authorization: `Bearer ${token}`, // Use JWT token for authentication
@@ -41,7 +42,7 @@ const ProtectedRoute = ({ children }) => {
           // Call logout API if user is not logged in or token is invalid
           try {
             const update_log_out_response = await fetch(
-              "http://localhost:5000/update_user_log_out",
+              `${API_BASE_URL}/update_user_log_out`,
               {
                 method: "PUT",
                 headers: {

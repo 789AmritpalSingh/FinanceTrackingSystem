@@ -1,7 +1,9 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const removeGroupMember = async (token, memberId, groupId) => {
   try {
     const response = await fetch(
-      `http://localhost:5000/delete_group_member/${memberId}/${groupId}`,
+      `${API_BASE_URL}/delete_group_member/${memberId}/${groupId}`,
       {
         method: "DELETE",
         headers: {
